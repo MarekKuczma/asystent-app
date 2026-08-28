@@ -407,6 +407,9 @@ function ikonaRodzaju(kod){ return kod==='kop'?I.kop : kod==='os'||kod==='dost'?
 /* ---------- stan ---------- */
 var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
+/* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
+   zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
+var WERSJA_SHELL = 'asystent-v2';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -457,19 +460,23 @@ var trwaPobieranie = false;
 function pobierzDane(cicho){
   if (trwaPobieranie) return Promise.resolve();
   trwaPobieranie = true;
+  /* zwraca: 'ok' | 'kod' (odrzucona autoryzacja) | 'blad' | 'siec' —
+     dzięki temu wołający wie, JAKI komunikat pokazać (a nie zgaduje) */
   return api({ kod: ls(K.kod), akcja: 'dane' }).then(function(d){
     trwaPobieranie = false;
     if (!d.ok){
-      if (/kod|prob/.test(d.blad||'')) { wyloguj(d.blad); }
-      else if (!cicho) stanSync('blad', d.blad || 'błąd serwera');
-      return;
+      if (/kod|prob/.test(d.blad||'')) { wyloguj(d.blad); return 'kod'; }
+      if (!cicho) stanSync('blad', d.blad || 'błąd serwera');
+      return 'blad';
     }
     dane = d; dane._pobrano = Date.now();
     lsSet(K.dane, JSON.stringify(d));
     rysujWszystko();
+    return 'ok';
   }).catch(function(){
     trwaPobieranie = false;
     stanSync('offline', null);
+    return 'siec';
   });
 }
 
@@ -998,7 +1005,7 @@ function pokazWersje(){
   wersjaWorkera().then(function(sw){
     wersjaSW = sw || wersjaSW;
     var api = dane && dane.wersjaApi ? 'API '+dane.wersjaApi : 'API —';
-    var txt = 'Asystent Floty — '+(wersjaSW || 'asystent-v1')+' · '+api;
+    var txt = 'Asystent Floty — '+(wersjaSW || WERSJA_SHELL)+' · '+api;
     ['stopkaWersji','stopkaWersji2'].forEach(function(id){
       var e = el(id); if (e) e.textContent = txt; });
   });
@@ -1040,15 +1047,39 @@ function startAplikacji(){
       if (dane && Date.now() - (dane._pobrano||0) > 120000) pobierzDane(true); }
   });
 
-  var kod = ls(K.kod);
+  /* LINK Z KODEM (wzorzec rodziny): .../asystent-app/#k=XXXX-XXXX-XXXX
+     Kod jest NATYCHMIAST czyszczony z paska adresu (replaceState), żeby nie
+     został w historii, zakładkach ani na cudzym ekranie przy udostępnianiu.
+     Zapamiętany zostaje tylko w tym telefonie, jak przy wpisaniu ręcznym. */
+  var zLinku = null;
+  try {
+    var m = (location.hash + '&' + location.search).match(/[#&?]k=([A-Za-z0-9\-]{8,})/);
+    if (m) {
+      zLinku = decodeURIComponent(m[1]).toUpperCase();
+      history.replaceState(null, '', location.pathname);
+    }
+  } catch(e){}
+
+  var kod = zLinku || ls(K.kod);
+  if (zLinku && zLinku !== ls(K.kod)) {      /* nowy kod z linku wygrywa */
+    lsDel(K.dane); dane = null;
+    lsSet(K.kod, zLinku);
+  }
   if (!kod){ pokazLogin(null); return; }
   /* szybki start z pamieci + ciche odswiezenie */
   var zapisane = ls(K.dane);
   if (zapisane){ try{ dane = JSON.parse(zapisane); }catch(e){ dane = null; } }
   if (dane){ startAplikacji(); pobierzDane(true); }
   else { overlay(true, 'Pobieram dane…');
-    pobierzDane().then(function(){ overlay(false);
-      if (dane) startAplikacji(); else pokazLogin('Nie udało się pobrać danych — sprawdź sieć.'); }); }
+    pobierzDane().then(function(stan){
+      overlay(false);
+      if (dane) { startAplikacji(); return; }
+      /* 'kod' = komunikat z serwera pokazał już wyloguj() — nie nadpisujemy go
+         ogólnikiem o sieci (inaczej zły kod z linku wyglądałby jak brak zasięgu) */
+      if (stan !== 'kod')
+        pokazLogin(stan === 'siec' ? 'Brak połączenia z siecią — spróbuj ponownie.'
+                                   : 'Nie udało się pobrać danych — spróbuj ponownie.');
+    }); }
 })();
 </script>
 </body>
