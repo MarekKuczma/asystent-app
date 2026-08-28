@@ -496,20 +496,12 @@ var I = {
   /* ic-plus */    plus:  svg_('<path d="M12 5v14M5 12h14"/>'),
   /* ic-clip */    sprawy:svg_('<path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/>'),
   /* ic-chart */   koszty:svg_('<path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/>'),
-  /* ic-digger */  kop:   svg_('<path d="M3 18h10"/><circle cx="5" cy="18" r="1.6"/><circle cx="11" cy="18" r="1.6"/><path d="M4 15h8v-4H6l-2 4z"/><path d="M12 12l4-6 4 2-3 5"/><path d="M20 8l1 4-3 1"/>'),
-  /* ic-car */     auto:  svg_('<path d="M5 13l1.5-4.5A2 2 0 018.4 7h7.2a2 2 0 011.9 1.5L19 13"/><path d="M4 13h16a1 1 0 011 1v3h-2"/><path d="M5 17H3v-3a1 1 0 011-1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/><path d="M9.5 17h5"/>'),
-  /* ic-site */    inne:  svg_('<path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/>'),
+  /* ic-site */    budowa:svg_('<path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/>'),
   /* ic-wrench */  wr:    svg_('<path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/>'),
   /* ic-warn */    uwaga: svg_('<path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/>'),
   /* ic-clock */   zegar: svg_('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
   /* ic-user */    osoba: svg_('<circle cx="12" cy="8.5" r="3.7"/><path d="M5 20a7.3 7.3 0 0 1 14 0"/>'),
   /* ic-money */   kasa:  svg_('<rect x="3" y="7" width="18" height="11" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 10.2v0M18 15v0"/>'),
-  /* HDS / dźwig — nowa, styl rodziny: podwozie jak w ic-digger + wysięgnik z hakiem */
-                   hds:   svg_('<path d="M3 18h10"/><circle cx="5.5" cy="18" r="1.6"/><circle cx="10.5" cy="18" r="1.6"/><path d="M4 15h8v-3.5H6L4 15Z"/><path d="M12 11.5V6h8"/><path d="M20 6v3.2"/><path d="M18.2 9.2h3.6"/>'),
-  /* przyczepa — nowa, styl rodziny: skrzynia, dyszel z zaczepem, oś */
-                   przycz:svg_('<rect x="3.5" y="7.5" width="12" height="7" rx="1.2"/><path d="M15.5 11h4.1l1.2 1.3"/><circle cx="7.5" cy="17.4" r="1.7"/><circle cx="11.5" cy="17.4" r="1.7"/><path d="M5.6 14.5v1.3M13.4 14.5v1.3"/>'),
-  /* quad / Maverick — nowa, styl rodziny: dwa duże koła, nadwozie, kierownica */
-                   quad:  svg_('<circle cx="6" cy="16.4" r="2.6"/><circle cx="18" cy="16.4" r="2.6"/><path d="M6 13.8h3.4l1.9-3.4h4.3l1.5 3.4h.9"/><path d="M11.3 10.4 10 7.6h4"/>'),
                    back:  svg_('<path d="M15 18l-6-6 6-6"/>', 'width:13px;height:13px'),
   /* nowa, styl rodziny — pełna zębatka (sam okrąg z kreskami czytał się
      jak słońce, czyli jak ic-sun z rodziny) */
@@ -533,9 +525,27 @@ function kodRodzaju(rodzaj){
   if (r.indexOf('quad') !== -1 || r.indexOf('ciągnik') !== -1) return 'quad';
   return 'inne';
 }
+/* ---------- IKONY POJAZDÓW — osobny zestaw rodziny ----------
+   ⚠ To NIE są ikony ze sprite'u <symbol> (te mają kreskę 1.75). Pojazdy mają
+   własny zestaw, identyczny w `IKONY` w Aplikacji Ewidencji i w `rodzajIcon()`
+   w Panelu Floty (v51) — kreska 2. Przepisane 1:1, razem z fallbackiem.
+   Jedyny dodatek: `quad` (Maverick) — rodzina go nie ma, w Panelu wpada
+   w fallback; ikona narysowana na prośbę Marka 28.08.2026. */
+var IKONY_POJ = {
+  auto:      '<path d="M5 13l1.5-4.5A2 2 0 018.4 7h7.2a2 2 0 011.9 1.5L19 13"/><path d="M4 13h16a1 1 0 011 1v3h-2"/><path d="M5 17H3v-3a1 1 0 011-1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/><path d="M9.5 17h5"/>',
+  bus:       '<path d="M3 13l2-6h11l3 6"/><path d="M3 13h18v5h-2"/><path d="M7 18H5v-5"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M10 18h5"/>',
+  koparka:   '<path d="M3 18h10"/><circle cx="5" cy="18" r="1.6"/><circle cx="11" cy="18" r="1.6"/><path d="M4 15h8v-4H6l-2 4z"/><path d="M12 12l4-6 4 2-3 5"/><path d="M20 8l1 4-3 1"/>',
+  hds:       '<path d="M3 13l2-6h6l2 6"/><path d="M3 13h18v5h-2"/><path d="M7 18H5v-5"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M13 7l6-3"/><path d="M19 4v5"/><path d="M19 9l-1.5 1.5"/>',
+  przyczepa: '<rect x="2" y="8" width="15" height="7" rx="1"/><path d="M17 12h5"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="12" cy="17.5" r="1.8"/>',
+  quad:      '<circle cx="6" cy="16.4" r="2.6"/><circle cx="18" cy="16.4" r="2.6"/><path d="M6 13.8h3.4l1.9-3.4h4.3l1.5 3.4h.9"/><path d="M11.3 10.4 10 7.6h4"/>',
+  inne:      '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
+};
 function ikonaRodzaju(kod){
-  return kod==='kop' ? I.kop : kod==='hds' ? I.hds : kod==='przycz' ? I.przycz
-       : kod==='quad' ? I.quad : (kod==='osob'||kod==='ciez') ? I.auto : I.inne;
+  var k = kod==='kop' ? 'koparka' : kod==='ciez' ? 'bus' : kod==='osob' ? 'auto'
+        : kod==='przycz' ? 'przyczepa' : kod==='hds' ? 'hds'
+        : kod==='quad' ? 'quad' : 'inne';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
+         'stroke-linecap="round" stroke-linejoin="round">'+IKONY_POJ[k]+'</svg>';
 }
 
 /* ---------- KOLEJNOŚĆ LIST — jak w rodzinie (rangaTypu_ z Floty/Ewidencji):
@@ -580,7 +590,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v4';
+var WERSJA_SHELL = 'asystent-v5';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
