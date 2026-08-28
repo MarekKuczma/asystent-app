@@ -222,6 +222,10 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .mrow .nm .model{display:block; font-size:11px; color:var(--szary); margin-top:1px;
    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+/* VIN (tylko koparki) — monospace, żeby dało się czytać znak po znaku
+   i porównywać z tabliczką na maszynie. */
+.mrow .nm .model.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px;
+   letter-spacing:.2px}
 .mrow .reg{font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:var(--szary);
    background:var(--wcisk); padding:2px 7px; border-radius:6px; flex:none}
 .mrow .chev{color:var(--szary); font-size:16px; flex:none}
@@ -236,6 +240,8 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .hero .meta{display:flex; gap:8px; margin-top:7px; align-items:center; font-size:11px; flex-wrap:wrap}
 .hero .reg{font-family:ui-monospace,Consolas,monospace; background:rgba(255,255,255,.18);
    padding:2px 8px; border-radius:6px}
+.hero .vin{font-family:ui-monospace,Consolas,monospace; font-size:11px; opacity:.8;
+   margin-top:6px; letter-spacing:.3px; word-break:break-all}
 .terms{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px}
 .term{background:var(--karta); border-radius:12px; padding:9px 6px; text-align:center;
    border:1px solid var(--linia); box-shadow:var(--cien)}
@@ -585,6 +591,17 @@ function modelMaszyny(m){
   var k = kluczMaszyny(m);
   return (m.nazwa && m.nazwa !== k) ? m.nazwa : '';
 }
+/* Koparka / koparko-ładowarka / koparka gąsienicowa — TYLKO te. „ładowarka"
+   bez „kopark" tu NIE wchodzi (kodRodzaju łączy je w jeden kolor, ale VIN
+   dotyczy wyłącznie koparek — prośba Marka 28.08). */
+function czyKoparka_(m){ return String(m && m.rodzaj || '').toLowerCase().indexOf('kopark') !== -1; }
+/* Druga, szara linijka na liście maszyn. Przy koparkach Marek rozpoznaje
+   sprzęt po VIN-ie (nie mają rejestracji), więc tam idzie VIN; przy reszcie
+   zostaje model, jak w rodzinie. */
+function podpisMaszyny(m){
+  if (czyKoparka_(m) && m.vin) return m.vin;
+  return modelMaszyny(m);
+}
 function sortujMaszyny(lista){
   return lista.slice().sort(function(a,b){
     var r = rangaTypu_(a.rodzaj) - rangaTypu_(b.rodzaj);
@@ -598,7 +615,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v6';
+var WERSJA_SHELL = 'asystent-v7';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -829,7 +846,9 @@ function rysujSzukaj(){
     var t = filtrTekst.toLowerCase();
     return (m.nazwa||'').toLowerCase().indexOf(t)>=0 ||
            (m.rejestracja||'').toLowerCase().indexOf(t)>=0 ||
-           (m.kierowca||'').toLowerCase().indexOf(t)>=0;
+           (m.kierowca||'').toLowerCase().indexOf(t)>=0 ||
+           /* VIN też przeszukujemy — wystarczy końcówka z tabliczki */
+           (m.vin||'').toLowerCase().indexOf(t)>=0;
   }));
   h += '<div class="karta">';
   if (!lista.length) h += '<div class="pusto">Nic nie pasuje do szukania.</div>';
@@ -841,11 +860,11 @@ function rysujSzukaj(){
       ostatniaRanga = r;
       h += '<div class="grupa">'+esc(nazwaKategorii_(m))+'</div>';
     }
-    var model = modelMaszyny(m);
+    var model = podpisMaszyny(m), vin = (model && model === m.vin);
     h += '<div class="mrow" onclick="otworzMaszyne(\''+m.id+'\')">'+
       '<span class="ik ic k-'+kodRodzaju(m.rodzaj)+'">'+ikonaRodzaju(kodRodzaju(m.rodzaj))+'</span>'+
       '<span class="nm"><b>'+esc(kluczMaszyny(m))+'</b>'+
-        (model ? '<span class="model">'+esc(model)+'</span>' : '')+'</span>'+
+        (model ? '<span class="model'+(vin?' vin':'')+'">'+esc(model)+'</span>' : '')+'</span>'+
       '<span class="chev">›</span></div>';
   });
   h += '</div>';
@@ -877,7 +896,9 @@ function rysujKartaMaszyny(){
     '<div class="nm">'+esc(m.nazwa)+'</div><div class="meta">'+
     '<span class="reg">'+esc(m.rejestracja||'bez rejestracji')+'</span>'+
     '<span>'+esc(m.rodzaj||'')+'</span>'+
-    (m.kierowca ? '<span>· '+esc(m.kierowca)+'</span>' : '')+'</div></div>';
+    (m.kierowca ? '<span>· '+esc(m.kierowca)+'</span>' : '')+'</div>'+
+    /* VIN na karcie — tylko koparki, tak jak na liście */
+    (czyKoparka_(m) && m.vin ? '<div class="vin">VIN '+esc(m.vin)+'</div>' : '')+'</div>';
   h += '<div class="terms">'+terminHTML('Badanie', m.terminy.badanie)+
        terminHTML('OC', m.terminy.oc)+terminHTML('UDT', m.terminy.udt)+
        terminHTML('Mienie', m.terminy.mienie)+'</div>';
