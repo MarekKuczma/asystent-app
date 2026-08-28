@@ -385,7 +385,15 @@ nav button.zg .plus{width:100%;height:100%;border-radius:50%;background:var(--gr
    display:flex;align-items:center;justify-content:center; transition:transform .2s}
 nav button.zg.on .plus-glow{transform:scale(1.07)}
 nav button.zg .plus svg{stroke:#fff;width:20px;height:20px; stroke-width:2.2}
-nav .wskaznik{position:absolute; top:0; left:0; width:20%; height:3px;
+/* ⚠ Kreska musi liczyć się w TYM SAMYM pudełku co przyciski. Nawigacja ma
+   po 4 px paddingu z boków, więc przyciski zaczynają się od 4 px i mają po
+   (100% − 8px)/5 szerokości. Wcześniej wskaźnik szedł od krawędzi ekranu
+   i po 20% szerokości — przez to na skrajnych zakładkach uciekał o ~3 px
+   w przeciwne strony, a na środkowej trafiał idealnie (usterka zgłoszona
+   przez Marka 28.08). --zakladki podmienia JS, gdy rola nie widzi Kosztów. */
+nav{--zakladki:5}
+nav .wskaznik{position:absolute; top:0; left:4px; height:3px;
+   width:calc((100% - 8px) / var(--zakladki));
    display:flex; justify-content:center; pointer-events:none;
    transition:transform .34s cubic-bezier(.4,1.3,.5,1), opacity .18s linear}
 nav .wskaznik i{width:44%; height:100%; border-radius:0 0 2px 2px;
@@ -590,7 +598,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v5';
+var WERSJA_SHELL = 'asystent-v6';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1238,7 +1246,7 @@ function rysujWszystko(){
   stanSieci = { tryb:'ok', info:null };
   el('kto').textContent = dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '';
   el('navKoszty').classList.toggle('ukryte', !dane.koszty);
-  document.querySelector('nav .wskaznik').style.width = dane.koszty ? '20%' : '25%';
+  document.querySelector('nav').style.setProperty('--zakladki', dane.koszty ? 5 : 4);
   rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujKoszty(); rysujZglos(); rysujUstawienia();
   if (aktualny==='karta') rysujKartaMaszyny();
   if (aktualny==='sprawa') rysujKartaSprawy();

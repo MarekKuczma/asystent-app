@@ -2,7 +2,7 @@
    Konwencja nazwy cache: asystent-vNN — NUMER podbijać przy KAŻDEJ zmianie
    plików aplikacji (inaczej przeglądarki podadzą stare pliki z cache).
    Stopka w aplikacji pokazuje 'asystent-vNN' — patrz obsługa message. */
-var WERSJA_CACHE = 'asystent-v5';   /* v5: ikony pojazdow 1:1 z Panelem i Ewidencja (IKONY/rodzajIcon) */
+var WERSJA_CACHE = 'asystent-v6';   /* v6: wyrownanie kreski wskaznika do ikon w dolnym menu */
 var SHELL = [
   './', './index.html', './config.js', './manifest.json',
   './ikona-192.png', './ikona-512.png',
