@@ -26,41 +26,96 @@ body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 
 /* ---- palety (wybór w Ustawieniach; każda MUSI mieć --wskaznik-grad w lustrze,
         żeby pętla animacji "plyn" nie miała szwu — lekcja Z-95 z Floty) ---- */
+/* --stozek = kolory obracającej się obwódki (Z-81 z Floty), --glow-krycie
+   = siła poświaty pod nią. KAŻDA paleta musi mieć własne, tak jak w rodzinie. */
 :root, [data-paleta="gamma"]{--akcent:#16a34a; --akcent-moc:#22c55e;
    --grad:linear-gradient(135deg,#22c55e,#7e22ce);
    --ikona-grad:linear-gradient(135deg,#052e16,#16a34a 55%,#7e22ce); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#4ade80,#7e22ce,#4ade80)}
+   --wskaznik-grad:linear-gradient(90deg,#4ade80,#7e22ce,#4ade80);
+   --stozek:#86efac,#22c55e,#7e22ce,#22c55e,#86efac; --glow-krycie:.42}
 [data-paleta="zelazna"]{--akcent:#b91c1c; --akcent-moc:#dc2626;
    --grad:linear-gradient(135deg,#dc2626,#f59e0b);
    --ikona-grad:linear-gradient(135deg,#450a0a,#dc2626 55%,#f59e0b); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#f59e0b,#dc2626,#f59e0b)}
+   --wskaznik-grad:linear-gradient(90deg,#f59e0b,#dc2626,#f59e0b);
+   --stozek:#fbbf24,#f59e0b,#dc2626,#f59e0b,#fbbf24; --glow-krycie:.42}
 [data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
    --grad:linear-gradient(135deg,#dc2626,#1d4ed8);
    --ikona-grad:linear-gradient(135deg,#7f1d1d,#1e3a8a); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444)}
+   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444);
+   --stozek:#93c5fd,#2563eb,#dc2626,#2563eb,#93c5fd; --glow-krycie:.42}
 [data-paleta="widmo"]{--akcent:#6d28d9; --akcent-moc:#8b5cf6;
    --grad:linear-gradient(135deg,#7c3aed,#ef4444);
    --ikona-grad:linear-gradient(135deg,#2e1065,#7c3aed 60%,#ef4444); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#a78bfa,#ef4444,#a78bfa)}
+   --wskaznik-grad:linear-gradient(90deg,#a78bfa,#ef4444,#a78bfa);
+   --stozek:#c4b5fd,#8b5cf6,#ef4444,#8b5cf6,#c4b5fd; --glow-krycie:.45}
 [data-paleta="zorza"]{--akcent:#7c3aed; --akcent-moc:#8b5cf6;
    --grad:linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899);
    --ikona-grad:linear-gradient(135deg,#164e63,#7c3aed,#db2777); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee)}
+   --wskaznik-grad:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee);
+   --stozek:#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee; --glow-krycie:.62}
 [data-paleta="rgb"]{--akcent:#e11d48; --akcent-moc:#f43f5e;
    --grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55);
    --ikona-grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55)}
-/* palety specjalne: akcenty płyną, plus "oddycha" */
-[data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,[data-paleta="zorza"] nav .plus,
-[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus{
+   --wskaznik-grad:linear-gradient(90deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55);
+   --stozek:#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55; --glow-krycie:.70}
+
+/* ---- OBRACAJĄCA SIĘ OBWÓDKA PRZYCISKÓW (Z-81, przepisane z Floty) ----
+   @property pozwala przeglądarce interpolować kąt; bez rejestracji obwódka
+   jest statyczna — akceptowalny fallback (starsze iOS). Identyczny blok
+   w rodzinie: zmieniasz tu, sprawdź i tam. */
+@property --kat { syntax:'<angle>'; initial-value:0deg; inherits:true; }
+@keyframes obrot { to { --kat:360deg; } }
+.przycisk-glow{position:relative; isolation:isolate; padding:2px; border-radius:16px;
+   background:conic-gradient(from var(--kat), var(--stozek));
+   animation:obrot 4s linear infinite}
+.przycisk-glow::after{content:''; position:absolute; inset:2px; border-radius:14px;
+   background:conic-gradient(from var(--kat), var(--stozek));
+   filter:blur(13px); opacity:var(--glow-krycie); z-index:-1}
+.przycisk-glow .przycisk{margin-top:0}
+
+/* plus w dolnym menu — ta sama obwódka, we WSZYSTKICH paletach */
+nav button.zg .plus-glow{width:44px;height:44px;border-radius:50%;margin-top:-16px;
+   padding:2px; position:relative; isolation:isolate;
+   background:conic-gradient(from var(--kat), var(--stozek));
+   animation:obrot 4s linear infinite; box-shadow:0 5px 14px rgba(0,0,0,.22)}
+nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-radius:50%;
+   background:conic-gradient(from var(--kat), var(--stozek));
+   filter:blur(10px); opacity:var(--glow-krycie); z-index:-1}
+
+/* kafelki ikon na kartach — obwódka jak .ikona-krag w rodzinie */
+.stat, .term{position:relative}
+
+/* ---- PALETY SPECJALNE: animowane tła i poświaty (wzorzec aurora/rgb) ---- */
+[data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,
+[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{
    background-size:250% 250%; animation:zorzaPlyn 7s ease-in-out infinite}
-[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus{animation-duration:4.5s}
+[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{animation-duration:4.5s}
 @keyframes zorzaPlyn{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-[data-paleta="zorza"] nav .plus,[data-paleta="rgb"] nav .plus{
-   animation-name:zorzaPlyn,oddechPlusa; animation-duration:7s,2.8s;
-   animation-timing-function:ease-in-out; animation-iteration-count:infinite}
-[data-paleta="rgb"] nav .plus{animation-duration:4.5s,2.2s}
-@keyframes oddechPlusa{0%,100%{box-shadow:0 5px 14px rgba(0,0,0,.22)}50%{box-shadow:0 5px 22px rgba(0,0,0,.34)}}
+/* nagłówek: przebiegający połysk (przebiegPolysk z Floty) */
+@keyframes przebiegPolysk{0%{transform:translateX(-130%)}45%,100%{transform:translateX(130%)}}
+[data-paleta="zorza"] header,[data-paleta="rgb"] header{position:relative; overflow:hidden;
+   background-size:250% 250%; animation:zorzaPlyn 7s ease-in-out infinite}
+[data-paleta="rgb"] header{animation-duration:4.5s}
+[data-paleta="zorza"] header::after,[data-paleta="rgb"] header::after{content:'';
+   position:absolute; inset:0; pointer-events:none;
+   background:linear-gradient(105deg, transparent 36%, rgba(255,255,255,.38) 50%, transparent 64%);
+   transform:translateX(-130%); animation:przebiegPolysk 5.5s ease-in-out infinite}
+/* ikona w nagłówku i kafelki kategorii: wirujący pierścień */
+[data-paleta="zorza"] header img.mark,[data-paleta="rgb"] header img.mark{
+   box-shadow:0 0 0 2px transparent, 0 2px 10px rgba(0,0,0,.35);
+   outline:2px solid transparent; filter:drop-shadow(0 0 6px rgba(255,255,255,.45))}
+[data-paleta="zorza"] .row .ic,[data-paleta="rgb"] .row .ic{
+   background:linear-gradient(var(--karta),var(--karta)) padding-box,
+              conic-gradient(from var(--kat), var(--stozek)) border-box;
+   border:1.5px solid transparent; animation:obrot 6s linear infinite}
+/* neon pod aktywną zakładką + świecąca ikona (jak w rodzinie) */
+[data-paleta="zorza"] nav .wskaznik i,[data-paleta="rgb"] nav .wskaznik i{
+   box-shadow:0 0 9px var(--akcent-moc)}
+[data-paleta="zorza"] nav button.on svg,[data-paleta="rgb"] nav button.on svg{
+   filter:drop-shadow(0 0 6px currentColor)}
+/* liczby na kaflach Pulsu: poświata */
+[data-paleta="rgb"] .stat .n,[data-paleta="zorza"] .stat .n{
+   filter:drop-shadow(0 0 8px rgba(168,85,247,.55))}
 
 /* ---- tryb jasny / ciemny ---- */
 :root{--tlo:#f4f6f8; --karta:#ffffff; --tekst:#1f2937; --szary:#6b7280; --linia:#e7eaee;
@@ -149,10 +204,19 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .mrow:first-child{border-top:none}
 .mrow .ik{width:28px;height:28px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center}
 .mrow .ik svg{width:15px;height:15px}
-.mrow .nm{flex:1; font-weight:600; font-size:13.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+/* Nazwa maszyny (rejestracja / własna nazwa) jest GŁÓWNA — model to dopisek,
+   jak w rodzinie: „WP 6865P — Opel Movano". */
+.mrow .nm{flex:1; min-width:0; overflow:hidden}
+.mrow .nm b{display:block; font-weight:600; font-size:14px; letter-spacing:-.1px;
+   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.mrow .nm .model{display:block; font-size:11px; color:var(--szary); margin-top:1px;
+   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .mrow .reg{font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:var(--szary);
    background:var(--wcisk); padding:2px 7px; border-radius:6px; flex:none}
 .mrow .chev{color:var(--szary); font-size:16px; flex:none}
+.grupa{font-size:10px; text-transform:uppercase; letter-spacing:.7px; color:var(--szary);
+   font-weight:700; padding:10px 2px 4px; border-top:1px solid var(--linia)}
+.karta .grupa:first-child{border-top:none; padding-top:2px}
 
 /* karta maszyny */
 .hero{background:var(--grad); color:var(--on-akcent); border-radius:16px; padding:14px 16px; margin:10px 0}
@@ -204,7 +268,13 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .krow .kl span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .krow .kl b{font-weight:600; flex:none}
 .ktr{height:7px; border-radius:4px; background:var(--wcisk); overflow:hidden}
-.kfl{height:100%; border-radius:4px; background:var(--grad)}
+/* Wykres kosztów „wypełnia się" przy każdym pokazaniu ekranu: paski jadą
+   od zera do swojej szerokości (--do). Kolejne słupki startują z opóźnieniem,
+   żeby było widać ruch z góry na dół. */
+.kfl{height:100%; border-radius:4px; background:var(--grad);
+   width:0; animation:wypelnij .75s cubic-bezier(.25,.9,.35,1) forwards;
+   animation-delay:var(--zwloka,0ms)}
+@keyframes wypelnij{from{width:0} to{width:var(--do)}}
 .kfl.c-kop{background:#6AB04C} .kfl.c-os{background:#F0932B} .kfl.c-dost{background:#0984E3}
 .kfl.c-none{background:var(--szary); opacity:.45}
 .mon{display:flex; align-items:center; justify-content:space-between; margin:2px 0 8px}
@@ -298,11 +368,10 @@ nav button{flex:1; border:0; background:none; color:var(--szary); font:inherit; 
 nav button svg{width:21px;height:21px;stroke:currentColor; transition:transform .2s}
 nav button.on{color:var(--akcent); font-weight:700}
 nav button.on svg{transform:translateY(-1px)}
-nav button.zg .plus{width:40px;height:40px;border-radius:50%;background:var(--grad);
-   display:flex;align-items:center;justify-content:center;margin-top:-16px;
-   box-shadow:0 5px 14px rgba(0,0,0,.22); transition:transform .2s}
-nav button.zg.on .plus{transform:scale(1.07)}
-nav button.zg .plus svg{stroke:#fff;width:20px;height:20px}
+nav button.zg .plus{width:100%;height:100%;border-radius:50%;background:var(--grad);
+   display:flex;align-items:center;justify-content:center; transition:transform .2s}
+nav button.zg.on .plus-glow{transform:scale(1.07)}
+nav button.zg .plus svg{stroke:#fff;width:20px;height:20px; stroke-width:2.2}
 nav .wskaznik{position:absolute; top:0; left:0; width:20%; height:3px;
    display:flex; justify-content:center; pointer-events:none;
    transition:transform .34s cubic-bezier(.4,1.3,.5,1), opacity .18s linear}
@@ -321,8 +390,16 @@ nav .wskaznik.bez-zakladki{opacity:0}
   nav .wskaznik{transition:opacity .18s linear}
   nav .wskaznik i{animation:none}
   .overlay-zapis .spinner::after{animation-duration:1.6s}
-  [data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,[data-paleta="zorza"] nav .plus,
-  [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus,
+  /* paski wykresu: bez jazdy, ale MUSZĄ zostać wypełnione (animation-fill
+     nie zadziała, gdy animacji nie ma — dlatego jawna szerokość) */
+  .kfl{animation:none; width:var(--do)}
+  .przycisk-glow, .przycisk-glow::after,
+  nav button.zg .plus-glow, nav button.zg .plus-glow::after,
+  [data-paleta="zorza"] .row .ic,[data-paleta="rgb"] .row .ic,
+  [data-paleta="zorza"] header,[data-paleta="rgb"] header,
+  [data-paleta="zorza"] header::after,[data-paleta="rgb"] header::after,
+  [data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,
+  [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,
   .paleta.spec .sw{animation:none}
 }
 </style>
@@ -340,7 +417,7 @@ nav .wskaznik.bez-zakladki{opacity:0}
       <label for="loginKod">Kod osobisty</label>
       <input id="loginKod" autocomplete="off" autocapitalize="characters"
              spellcheck="false" placeholder="XXXX-XXXX-XXXX">
-      <button class="przycisk" id="loginBtn" style="margin-top:16px">Wejdź</button>
+      <div class="przycisk-glow" style="margin-top:16px"><button class="przycisk" id="loginBtn">Wejdź</button></div>
       <div class="fnote">kod dostajesz od Marka · zapamiętany na tym telefonie</div>
     </div>
   </div>
@@ -388,28 +465,81 @@ nav .wskaznik.bez-zakladki{opacity:0}
 /* ========================================================================== */
 'use strict';
 
-/* ---------- ikony SVG (DNA rodziny: svg, nie emoji) ---------- */
+/* ---------- ikony SVG — IDENTYCZNE jak w Aplikacji Flota / Ewidencji ----------
+   Ścieżki przepisane 1:1 z <symbol id="ic-..."> tamtych aplikacji, razem z ich
+   parametrami kreski (.ikona: fill:none, stroke-width 1.75, zaokrąglone końce).
+   Nie rysujemy własnych glifów — rodzina ma wyglądać jak jedna rodzina.
+   Wyjątki (w rodzinie nie ma takiego symbolu, dorysowane w tym samym stylu):
+   `lupa` i `gear`. */
+function svg_(sciezki, styl){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '+
+         'stroke-linecap="round" stroke-linejoin="round"'+(styl?' style="'+styl+'"':'')+'>'+
+         sciezki+'</svg>';
+}
 var I = {
-  puls:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 8-6-16-3 8H2"/></svg>',
-  lupa:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
-  plus:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-  sprawy:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>',
-  koszty:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>',
-  kop:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h10v3H3z"/><circle cx="5.5" cy="20" r="1"/><circle cx="10.5" cy="20" r="1"/><path d="M8 17v-5h4l3-5 4 2-3 5v3"/></svg>',
-  auto:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-6h11l3 6"/><path d="M3 13h18v5h-2"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M10 18h5"/></svg>',
-  inne:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5h8v2"/></svg>',
-  wr:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14 13l-3-3z"/></svg>',
-  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M15 18l-6-6 6-6"/></svg>',
-  gear:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01c.26.63.87 1.04 1.56 1.04H21a2 2 0 1 1 0 4h-.09c-.69 0-1.3.41-1.51 1.04z"/></svg>'
+  /* ic-gauge */   puls:  svg_('<path d="M4.5 15.5a8 8 0 1 1 15 0"/><path d="M12 13.5 15.5 9"/><circle cx="12" cy="14.5" r="1.2"/><path d="M4.5 19h15"/>'),
+  /* nowa, styl rodziny */ lupa: svg_('<circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4 4"/>'),
+  /* ic-plus */    plus:  svg_('<path d="M12 5v14M5 12h14"/>'),
+  /* ic-clip */    sprawy:svg_('<path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/>'),
+  /* ic-chart */   koszty:svg_('<path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/>'),
+  /* ic-digger */  kop:   svg_('<path d="M3 18h10"/><circle cx="5" cy="18" r="1.6"/><circle cx="11" cy="18" r="1.6"/><path d="M4 15h8v-4H6l-2 4z"/><path d="M12 12l4-6 4 2-3 5"/><path d="M20 8l1 4-3 1"/>'),
+  /* ic-car */     auto:  svg_('<path d="M5 13l1.5-4.5A2 2 0 018.4 7h7.2a2 2 0 011.9 1.5L19 13"/><path d="M4 13h16a1 1 0 011 1v3h-2"/><path d="M5 17H3v-3a1 1 0 011-1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/><path d="M9.5 17h5"/>'),
+  /* ic-site */    inne:  svg_('<path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/>'),
+  /* ic-wrench */  wr:    svg_('<path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/>'),
+  /* ic-warn */    uwaga: svg_('<path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/>'),
+  /* ic-clock */   zegar: svg_('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  /* ic-user */    osoba: svg_('<circle cx="12" cy="8.5" r="3.7"/><path d="M5 20a7.3 7.3 0 0 1 14 0"/>'),
+  /* ic-money */   kasa:  svg_('<rect x="3" y="7" width="18" height="11" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 10.2v0M18 15v0"/>'),
+                   back:  svg_('<path d="M15 18l-6-6 6-6"/>', 'width:13px;height:13px'),
+  /* nowa, styl rodziny — pełna zębatka (sam okrąg z kreskami czytał się
+     jak słońce, czyli jak ic-sun z rodziny) */
+  gear: svg_('<circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/>')
 };
 function ikonaRodzaju(kod){ return kod==='kop'?I.kop : kod==='os'||kod==='dost'?I.auto : I.inne; }
+
+/* ---------- KOLEJNOŚĆ LIST — jak w rodzinie (rangaTypu_ z Floty/Ewidencji):
+   auta osobowe → dostawcze/ciężarowe → koparki/ładowarki → HDS → przyczepy.
+   W obrębie kategorii alfabetycznie po TYM, czym Marek posługuje się na co
+   dzień: maszyny po swojej nazwie, auta po rejestracji — a to jedno i to samo
+   pole (klucz ze Słownika), więc wystarczy jedno porównanie. */
+function rangaTypu_(typ){
+  var t = String(typ || '').toLowerCase();
+  /* ⚠ PRZYCZEPY SPRAWDZAMY PIERWSZE. W Spisie jest rodzaj „przyczepa
+     ciężarowa" — przy kolejności z Floty wpadał między auta dostawcze,
+     bo pasował do „ciężarow". Tu typy są opisowe, więc kolejność testów
+     musi iść od najbardziej szczegółowych. */
+  if (t.indexOf('przyczep') !== -1 || t.indexOf('naczep') !== -1) return 4;
+  if (t.indexOf('hds') !== -1 || t.indexOf('dźwig') !== -1) return 3;
+  if (t.indexOf('kopark') !== -1 || t.indexOf('ładowarka') !== -1) return 2;
+  if (t.indexOf('osobow') !== -1) return 0;
+  if (t.indexOf('dostaw') !== -1 || t.indexOf('bus') !== -1 || t.indexOf('ciężarow') !== -1) return 1;
+  return 5;
+}
+/* Etykieta maszyny: PIERWSZE jest to, po czym Marek ją zna (rejestracja lub
+   własna nazwa maszyny), model idzie jako dopisek — dokładnie jak w rodzinie
+   ("WP 6865P — Opel Movano"). */
+var NAZWY_KATEGORII = ['Samochody osobowe','Dostawcze i ciężarowe','Koparki i ładowarki',
+                       'HDS i dźwigi','Przyczepy','Pozostałe'];
+function nazwaKategorii_(m){ return NAZWY_KATEGORII[rangaTypu_(m.rodzaj)] || 'Pozostałe'; }
+function kluczMaszyny(m){ return m.rejestracja || m.nazwa || ''; }
+function modelMaszyny(m){
+  var k = kluczMaszyny(m);
+  return (m.nazwa && m.nazwa !== k) ? m.nazwa : '';
+}
+function sortujMaszyny(lista){
+  return lista.slice().sort(function(a,b){
+    var r = rangaTypu_(a.rodzaj) - rangaTypu_(b.rodzaj);
+    if (r) return r;
+    return kluczMaszyny(a).localeCompare(kluczMaszyny(b), 'pl', {numeric:true});
+  });
+}
 
 /* ---------- stan ---------- */
 var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v2';
+var WERSJA_SHELL = 'asystent-v3';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -521,7 +651,7 @@ function zbudujNav(){
   var btns = document.querySelectorAll('nav button');
   NAV_DEF.forEach(function(nd, i){
     btns[i].innerHTML = nd[0]==='zglos'
-      ? '<span class="plus">'+I.plus+'</span>'
+      ? '<span class="plus-glow"><span class="plus">'+I.plus+'</span></span>'
       : nd[2] + '<span>'+nd[1]+'</span>';
     btns[i].onclick = function(){ pokaz(nd[0]); };
   });
@@ -538,7 +668,9 @@ function pokaz(k){
   document.querySelectorAll('nav button').forEach(function(b){
     b.classList.toggle('on', TAB_IDX[k] !== undefined && b.dataset.n === NAV_DEF[TAB_IDX[k]][0]); });
   var wsk = document.querySelector('nav .wskaznik');
-  if (TAB_IDX[k] === undefined) wsk.classList.add('bez-zakladki');
+  /* Kreska chowa się poza zakładkami ORAZ pod plusem — tam wystawała zza
+     okrągłego przycisku i wyglądała jak usterka (uwaga Marka 28.08). */
+  if (TAB_IDX[k] === undefined || k === 'zglos') wsk.classList.add('bez-zakladki');
   else { wsk.classList.remove('bez-zakladki');
          wsk.style.transform = 'translateX(' + TAB_IDX[k]*100 + '%)'; }
   el('gearBtn').classList.toggle('on', k === 'ustawienia');
@@ -627,21 +759,30 @@ function rysujSzukaj(){
   h += '<div class="chips">'+katy.map(function(k){
     return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
   }).join('')+'</div>';
-  var lista = (dane.maszyny||[]).filter(function(m){
+  var lista = sortujMaszyny((dane.maszyny||[]).filter(function(m){
     if (filtrKat!=='wszystkie' && m.rodzaj_kod!==filtrKat) return false;
     if (!filtrTekst) return true;
     var t = filtrTekst.toLowerCase();
     return (m.nazwa||'').toLowerCase().indexOf(t)>=0 ||
            (m.rejestracja||'').toLowerCase().indexOf(t)>=0 ||
            (m.kierowca||'').toLowerCase().indexOf(t)>=0;
-  });
+  }));
   h += '<div class="karta">';
   if (!lista.length) h += '<div class="pusto">Nic nie pasuje do szukania.</div>';
+  var ostatniaRanga = null;
   lista.forEach(function(m){
+    /* nagłówki kategorii — jak optgroup w listach rodziny */
+    var r = rangaTypu_(m.rodzaj);
+    if (!filtrTekst && r !== ostatniaRanga){
+      ostatniaRanga = r;
+      h += '<div class="grupa">'+esc(nazwaKategorii_(m))+'</div>';
+    }
+    var model = modelMaszyny(m);
     h += '<div class="mrow" onclick="otworzMaszyne(\''+m.id+'\')">'+
       '<span class="ik ic k-'+m.rodzaj_kod+'">'+ikonaRodzaju(m.rodzaj_kod)+'</span>'+
-      '<span class="nm">'+esc(m.nazwa)+'</span>'+
-      '<span class="reg">'+esc(m.rejestracja||'—')+'</span><span class="chev">›</span></div>';
+      '<span class="nm"><b>'+esc(kluczMaszyny(m))+'</b>'+
+        (model ? '<span class="model">'+esc(model)+'</span>' : '')+'</span>'+
+      '<span class="chev">›</span></div>';
   });
   h += '</div>';
   el('ekranSzukaj').innerHTML = h;
@@ -783,7 +924,7 @@ function rysujKartaSprawy(){
   h += '<div class="h">Dopisz do sprawy</div><div class="karta f">'+
     '<div class="komunikat" id="dopiszKomunikat"></div>'+
     '<textarea id="dopiszTresc" rows="3" placeholder="np. odebrane, faktura 1 890 zł netto — status sam się zmieni"></textarea>'+
-    '<button class="przycisk" style="margin-top:9px" onclick="wyslijDopisek()">Dopisz</button>'+
+    '<div class="przycisk-glow" style="margin-top:9px"><button class="przycisk" onclick="wyslijDopisek()">Dopisz</button></div>'+
     '<div class="fnote">sprawy się nie edytuje w polach — dopisujesz treść, a status wynika z treści;<br>każdy dopisek zostaje w Historii</div></div>';
   el('ekranSprawa').innerHTML = h;
 }
@@ -819,12 +960,13 @@ function rysujKoszty(){
     var maxy = 0; Object.keys(grupy).forEach(function(k){ if (grupy[k]>maxy) maxy=grupy[k]; });
     var klucze = Object.keys(grupy);
     if (kosztyKv==='masz') klucze = klucze.slice(0, 14);
-    klucze.forEach(function(k){
+    klucze.forEach(function(k, i){
       var maszyna = kosztyKv==='masz' ? (dane.maszyny||[]).find(function(m){
         return m.rejestracja===k || m.nazwa===k; }) : null;
       var kl = maszyna ? 'c-'+maszyna.rodzaj_kod : (kosztyKv==='masz' ? 'c-none' : '');
       h += '<div class="krow"><div class="kl"><span>'+esc(k)+'</span><b>'+zl(grupy[k])+'</b></div>'+
-        '<div class="ktr"><div class="kfl '+kl+'" style="width:'+Math.max(4, Math.round(grupy[k]/maxy*100))+'%"></div></div></div>';
+        '<div class="ktr"><div class="kfl '+kl+'" style="--do:'+
+        Math.max(4, Math.round(grupy[k]/maxy*100))+'%; --zwloka:'+(i*70)+'ms"></div></div></div>';
     });
     if (kosztyKv==='masz' && Object.keys(grupy).length > 14)
       h += '<div class="fnote">pokazuję 14 największych z '+Object.keys(grupy).length+'</div>';
@@ -844,9 +986,21 @@ function rysujZglos(){
   var h = '<div class="f">'+
     '<div class="komunikat" id="zglosKomunikat"></div>'+
     '<label>Maszyna</label><select id="zgMaszyna">';
-  (dane.maszyny||[]).forEach(function(m){
-    h += '<option value="'+esc(m.id)+'">'+esc(m.nazwa)+(m.rejestracja?' — '+esc(m.rejestracja):'')+'</option>';
+  /* ta sama kolejność co w Szukaj i w listach Floty/Ewidencji:
+     kategorie wg rangaTypu_, w środku alfabetycznie; etykieta „klucz — model" */
+  var ostatniaKat = null;
+  sortujMaszyny(dane.maszyny||[]).forEach(function(m){
+    var kat = nazwaKategorii_(m);
+    if (kat !== ostatniaKat){
+      if (ostatniaKat !== null) h += '</optgroup>';
+      ostatniaKat = kat;
+      h += '<optgroup label="'+esc(kat)+'">';
+    }
+    var model = modelMaszyny(m);
+    h += '<option value="'+esc(m.id)+'">'+esc(kluczMaszyny(m))+
+         (model ? ' — '+esc(model) : '')+'</option>';
   });
+  if (ostatniaKat !== null) h += '</optgroup>';
   h += '<option value="">— nie wiem / inna (opisz w treści)</option></select>';
   h += '<label>Typ</label><div class="chips" id="zgTypy">'+
     ['Awaria','Serwis','Przegląd','Zakup','Inne'].map(function(t){
@@ -854,7 +1008,7 @@ function rysujZglos(){
     }).join('')+'</div>';
   h += '<label>Co się dzieje?</label>'+
     '<textarea id="zgTresc" rows="5" placeholder="np. pękł wąż hydrauliczny, Janek załatwił u Hydromexu, 800 zł gotówką"></textarea>'+
-    '<button class="przycisk" style="margin-top:16px" onclick="wyslijZgloszenie()">Wyślij zgłoszenie</button>'+
+    '<div class="przycisk-glow" style="margin-top:16px"><button class="przycisk" onclick="wyslijZgloszenie()">Wyślij zgłoszenie</button></div>'+
     '<div class="fnote">wpis trafia do skrzynki i dostaje status „Nowe" —<br>statusów nie ustawiasz, wynikają z treści</div></div>';
   el('ekranZglos').innerHTML = h;
 }
@@ -980,11 +1134,23 @@ function rysujUstawienia(){
   el('ekranUstawienia').innerHTML = h;
   pokazWersje();
 }
+/* Pasek systemowy telefonu (meta theme-color). Jak we Flocie i Ewidencji:
+   reaguje na PALETĘ, nie na tryb jasny/ciemny. System przyjmuje jeden pełny
+   kolor (gradientu tam być nie może), więc bierzemy najciemniejszy odcień
+   nagłówka danej palety. */
+var KOLOR_PASKA = { gamma:'#14532d', zelazna:'#7f1d1d', heros:'#1e3a8a',
+                    widmo:'#4c1d95', zorza:'#155e75', rgb:'#a855f7' };
+function ustawPasekSystemowy(){
+  var p = document.documentElement.dataset.paleta || 'gamma';
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', KOLOR_PASKA[p] || KOLOR_PASKA.gamma);
+}
 function ustawMotyw(m){
   document.documentElement.dataset.motyw = m; lsSet(K.motyw, m); rysujUstawienia();
 }
 function ustawPalete(p){
-  document.documentElement.dataset.paleta = p; lsSet(K.paleta, p); rysujUstawienia();
+  document.documentElement.dataset.paleta = p; lsSet(K.paleta, p);
+  ustawPasekSystemowy(); rysujUstawienia();
 }
 
 /* ---------- overlay + wersje ---------- */
@@ -1036,6 +1202,7 @@ function startAplikacji(){
   /* motyw + paleta z pamieci telefonu */
   var m = ls(K.motyw); if (m) document.documentElement.dataset.motyw = m;
   var p = ls(K.paleta); if (p) document.documentElement.dataset.paleta = p;
+  ustawPasekSystemowy();
   zbudujNav();
 
   if ('serviceWorker' in navigator){
