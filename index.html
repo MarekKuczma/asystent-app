@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="pl" data-motyw="jasny" data-paleta="gamma">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="ikona-192.png">
+<link rel="apple-touch-icon" href="ikona-192.png">
+<title>Asystent Floty</title>
+<style>
+/* ============================================================================
+   ASYSTENT FLOTY — PWA v1 (fundament 28.08.2026)
+   Design 1:1 z "Makieta zatwierdzona" (6 rund makiet z Markiem):
+   paleta główna GAMMA, nagłówek gradientowy jak we Flocie, start = Puls,
+   kolory kategorii pojazdów v93, koszty w 3 przekrojach, karta sprawy
+   z "Dopisz" (append-only, statusy WYNIKAJĄ Z TREŚCI — zasada #1).
+   Gotowe elementy rodziny: wskaźnik nav Z-95, wejście ekranu .22s,
+   overlay zapisu Z-87, .komunikat, kolejka offline E-40/D50, stopka W-22.
+   ========================================================================== */
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+     background:var(--tlo); color:var(--tekst); font-size:14px;
+     transition:background .25s,color .25s}
+
+/* ---- palety (wybór w Ustawieniach; każda MUSI mieć --wskaznik-grad w lustrze,
+        żeby pętla animacji "plyn" nie miała szwu — lekcja Z-95 z Floty) ---- */
+:root, [data-paleta="gamma"]{--akcent:#16a34a; --akcent-moc:#22c55e;
+   --grad:linear-gradient(135deg,#22c55e,#7e22ce);
+   --ikona-grad:linear-gradient(135deg,#052e16,#16a34a 55%,#7e22ce); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#4ade80,#7e22ce,#4ade80)}
+[data-paleta="zelazna"]{--akcent:#b91c1c; --akcent-moc:#dc2626;
+   --grad:linear-gradient(135deg,#dc2626,#f59e0b);
+   --ikona-grad:linear-gradient(135deg,#450a0a,#dc2626 55%,#f59e0b); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#f59e0b,#dc2626,#f59e0b)}
+[data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
+   --grad:linear-gradient(135deg,#dc2626,#1d4ed8);
+   --ikona-grad:linear-gradient(135deg,#7f1d1d,#1e3a8a); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444)}
+[data-paleta="widmo"]{--akcent:#6d28d9; --akcent-moc:#8b5cf6;
+   --grad:linear-gradient(135deg,#7c3aed,#ef4444);
+   --ikona-grad:linear-gradient(135deg,#2e1065,#7c3aed 60%,#ef4444); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#a78bfa,#ef4444,#a78bfa)}
+[data-paleta="zorza"]{--akcent:#7c3aed; --akcent-moc:#8b5cf6;
+   --grad:linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899);
+   --ikona-grad:linear-gradient(135deg,#164e63,#7c3aed,#db2777); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee)}
+[data-paleta="rgb"]{--akcent:#e11d48; --akcent-moc:#f43f5e;
+   --grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55);
+   --ikona-grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55)}
+/* palety specjalne: akcenty płyną, plus "oddycha" */
+[data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,[data-paleta="zorza"] nav .plus,
+[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus{
+   background-size:250% 250%; animation:zorzaPlyn 7s ease-in-out infinite}
+[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus{animation-duration:4.5s}
+@keyframes zorzaPlyn{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+[data-paleta="zorza"] nav .plus,[data-paleta="rgb"] nav .plus{
+   animation-name:zorzaPlyn,oddechPlusa; animation-duration:7s,2.8s;
+   animation-timing-function:ease-in-out; animation-iteration-count:infinite}
+[data-paleta="rgb"] nav .plus{animation-duration:4.5s,2.2s}
+@keyframes oddechPlusa{0%,100%{box-shadow:0 5px 14px rgba(0,0,0,.22)}50%{box-shadow:0 5px 22px rgba(0,0,0,.34)}}
+
+/* ---- tryb jasny / ciemny ---- */
+:root{--tlo:#f4f6f8; --karta:#ffffff; --tekst:#1f2937; --szary:#6b7280; --linia:#e7eaee;
+      --wcisk:#eef1f4; --cien:0 1px 2px rgba(15,23,32,.05);
+      --blad:#d93025; --bg-blad:#fce8e6; --ok:#188038; --bg-ok:#e6f4ea;
+      --uwaga:#b45309; --bg-uwaga:#fef3c7}
+[data-motyw="ciemny"]{--tlo:#101418; --karta:#181e25; --tekst:#e7eaee; --szary:#939ca7;
+      --linia:#242c35; --wcisk:#1d242c; --cien:none;
+      --blad:#f28b82; --bg-blad:#3a1d1b; --ok:#81c995; --bg-ok:#12291a;
+      --uwaga:#fbbf24; --bg-uwaga:#33270e}
+
+#app{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column;
+     background:var(--tlo); position:relative}
+
+/* ---- nagłówek: wariant B (gradient jak we Flocie) — decyzja Marka ---- */
+header{background:var(--grad); color:#fff; padding:13px 14px 11px 16px;
+   padding-top:calc(13px + env(safe-area-inset-top));
+   display:flex; align-items:center; gap:11px; position:sticky; top:0; z-index:5}
+header img.mark{width:38px;height:38px;border-radius:11px;flex:none;display:block;
+   box-shadow:0 2px 6px rgba(15,23,32,.3)}
+header .naglowek-tekst{min-width:0; flex:1}
+header .tt{font-weight:800; font-size:16.5px; letter-spacing:-.2px; line-height:1.15; white-space:nowrap}
+header .kto{font-size:10.5px; color:rgba(255,255,255,.85); margin-top:1px}
+header .gear{border:0; background:none; color:rgba(255,255,255,.92); cursor:pointer; flex:none;
+   width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+   font:inherit}
+header .gear svg{width:19px;height:19px;stroke:currentColor}
+header .gear:hover,header .gear.on{background:rgba(255,255,255,.18); color:#fff}
+
+/* ---- treść ---- */
+main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
+.h{font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--szary);
+   margin:16px 2px 8px; font-weight:700}
+.karta{background:var(--karta); border-radius:14px; padding:12px 14px; margin-bottom:10px;
+   border:1px solid var(--linia); box-shadow:var(--cien)}
+
+/* pasek "dane z" + stany sieci (wzorzec .pasek-odswiezania) */
+.pasek-sync{display:flex; align-items:center; gap:7px; font-size:10.5px; color:var(--szary);
+   padding:9px 4px 0; flex-wrap:wrap}
+.pasek-sync b{color:var(--ok); font-weight:600}
+.pasek-sync .kropka{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.pasek-sync.offline .kropka{background:#f39c12}
+.pasek-sync.blad .kropka{background:var(--blad)}
+.pasek-sync .odsw{margin-left:auto; border:0; background:none; color:var(--akcent);
+   font:inherit; font-size:10.5px; font-weight:700; cursor:pointer; padding:2px 4px}
+
+/* kafle pulsu (bez kolorowych ramek — decyzja rundy 3) */
+.stats{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+.stat{background:var(--karta); border-radius:14px; padding:12px 14px;
+   border:1px solid var(--linia); box-shadow:var(--cien)}
+.stat .n{font-size:23px; font-weight:800; letter-spacing:-.5px}
+.stat .n.uw{color:var(--uwaga)} .stat .n.zl{color:var(--blad)}
+.stat .l{font-size:10.5px; color:var(--szary); margin-top:1px; line-height:1.3}
+
+/* wiersze list; kafelek ikony w kolorze kategorii pojazdu (v93) */
+.row{display:flex; gap:10px; padding:10px 2px; border-top:1px solid var(--linia);
+   align-items:flex-start; cursor:pointer}
+.row:first-child{border-top:none}
+.row .ic{width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;
+   justify-content:center;background:var(--wcisk)}
+.row .ic svg{width:17px;height:17px;stroke:var(--szary)}
+.ic.k-kop{background:rgba(106,176,76,.16)}  .ic.k-kop svg{stroke:#6AB04C}
+.ic.k-os{background:rgba(240,147,43,.16)}   .ic.k-os svg{stroke:#F0932B}
+.ic.k-dost{background:rgba(9,132,227,.14)}  .ic.k-dost svg{stroke:#0984E3}
+.row .mid{flex:1; min-width:0}
+.row .t1{font-weight:600; font-size:13.5px; line-height:1.3}
+.row .t2{font-size:11.5px; color:var(--szary); margin-top:2px; line-height:1.35}
+.pill{font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; flex:none}
+.pill.red{background:var(--bg-blad); color:var(--blad)}
+.pill.amber{background:var(--bg-uwaga); color:var(--uwaga)}
+.pill.green{background:var(--bg-ok); color:var(--ok)}
+.pill.acc{background:var(--wcisk); color:var(--akcent)}
+.pill.szara{background:var(--wcisk); color:var(--szary)}
+.pusto{text-align:center; color:var(--szary); padding:18px 8px; font-size:12.5px}
+
+/* szukajka */
+.szukajka{display:flex; gap:8px; align-items:center; background:var(--karta); border-radius:14px;
+   padding:12px 14px; border:1px solid var(--linia); box-shadow:var(--cien); margin:10px 0}
+.szukajka svg{width:17px;height:17px;stroke:var(--szary);flex:none}
+.szukajka input{border:0; background:none; font:inherit; color:inherit; flex:1; outline:none; min-width:0}
+.chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px}
+.chip{font-size:11px; padding:5px 11px; border-radius:999px; background:var(--karta);
+   border:1px solid var(--linia); color:var(--szary); cursor:pointer; font-family:inherit}
+.chip.on{background:var(--akcent); border-color:var(--akcent); color:var(--on-akcent); font-weight:600}
+.mrow{display:flex; gap:10px; align-items:center; padding:11px 2px; border-top:1px solid var(--linia); cursor:pointer}
+.mrow:first-child{border-top:none}
+.mrow .ik{width:28px;height:28px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center}
+.mrow .ik svg{width:15px;height:15px}
+.mrow .nm{flex:1; font-weight:600; font-size:13.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.mrow .reg{font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:var(--szary);
+   background:var(--wcisk); padding:2px 7px; border-radius:6px; flex:none}
+.mrow .chev{color:var(--szary); font-size:16px; flex:none}
+
+/* karta maszyny */
+.hero{background:var(--grad); color:var(--on-akcent); border-radius:16px; padding:14px 16px; margin:10px 0}
+.hero .back{font-size:12px; opacity:.85; margin-bottom:6px; cursor:pointer; display:inline-flex; gap:5px; align-items:center}
+.hero .nm{font-size:19px; font-weight:800; letter-spacing:-.3px}
+.hero .meta{display:flex; gap:8px; margin-top:7px; align-items:center; font-size:11px; flex-wrap:wrap}
+.hero .reg{font-family:ui-monospace,Consolas,monospace; background:rgba(255,255,255,.18);
+   padding:2px 8px; border-radius:6px}
+.terms{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px}
+.term{background:var(--karta); border-radius:12px; padding:9px 6px; text-align:center;
+   border:1px solid var(--linia); box-shadow:var(--cien)}
+.term .k{font-size:9px; color:var(--szary); text-transform:uppercase; letter-spacing:.4px; font-weight:700}
+.term .v{font-size:11.5px; font-weight:700; margin-top:3px}
+.term .v.ok{color:var(--ok)} .term .v.nd{color:var(--szary); font-weight:500}
+.term .v.uw{color:var(--uwaga)} .term .v.zl{color:var(--blad)}
+.term .dni{font-size:9px; color:var(--szary); margin-top:1px}
+
+/* karta sprawy */
+.sp-back{font-size:12px; color:var(--szary); cursor:pointer; display:inline-flex; gap:5px;
+   align-items:center; margin:10px 0 8px}
+.sp-title{display:flex; gap:10px; align-items:flex-start; justify-content:space-between}
+.sp-title .t{font-size:16.5px; font-weight:800; letter-spacing:-.2px; line-height:1.25}
+.meta2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:11px}
+.meta2 .m{background:var(--wcisk); border-radius:10px; padding:7px 10px}
+.meta2 .m .k{font-size:9px; color:var(--szary); text-transform:uppercase; letter-spacing:.5px; font-weight:700}
+.meta2 .m .v{font-size:12px; font-weight:600; margin-top:2px; word-break:break-word}
+.surowy{margin:0; font-size:12.5px; line-height:1.55; font-style:italic;
+   border-left:3px solid var(--akcent-moc); padding:2px 0 2px 11px; white-space:pre-wrap}
+.tl{position:relative; padding-left:17px}
+.tl::before{content:''; position:absolute; left:4px; top:10px; bottom:12px; width:2px; background:var(--linia)}
+.te{position:relative; padding:7px 0}
+.te::before{content:''; position:absolute; left:-16.5px; top:13px; width:9px; height:9px;
+   border-radius:50%; background:var(--akcent-moc); box-shadow:0 0 0 3px var(--karta)}
+.te.czeka::before{background:var(--uwaga)}
+.te .td{font-size:10px; color:var(--szary)}
+.te .tx{font-size:12.5px; margin-top:2px; line-height:1.45; white-space:pre-wrap}
+.te .tx .pill{margin-left:4px}
+
+/* koszty: 3 przekroje */
+.seg{display:flex; background:var(--wcisk); border-radius:12px; padding:3px; margin:10px 0}
+.seg button{flex:1; border:0; background:none; font:inherit; font-size:11.5px; padding:8px 4px;
+   border-radius:9px; color:var(--szary); cursor:pointer; font-weight:600;
+   transition:background .2s,color .2s,box-shadow .2s}
+.seg button.on{background:var(--karta); color:var(--tekst); font-weight:700; box-shadow:var(--cien)}
+.big{font-size:26px; font-weight:800; letter-spacing:-.5px}
+.big small{font-size:12px; color:var(--szary); font-weight:500}
+.krow{margin:9px 0}
+.krow .kl{display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; gap:8px}
+.krow .kl span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.krow .kl b{font-weight:600; flex:none}
+.ktr{height:7px; border-radius:4px; background:var(--wcisk); overflow:hidden}
+.kfl{height:100%; border-radius:4px; background:var(--grad)}
+.kfl.c-kop{background:#6AB04C} .kfl.c-os{background:#F0932B} .kfl.c-dost{background:#0984E3}
+.kfl.c-none{background:var(--szary); opacity:.45}
+.mon{display:flex; align-items:center; justify-content:space-between; margin:2px 0 8px}
+.mon .mn{font-weight:700; font-size:14.5px}
+.mon button{width:30px;height:30px;border-radius:9px;background:var(--karta);border:1px solid var(--linia);
+   display:flex;align-items:center;justify-content:center;color:var(--szary);cursor:pointer;
+   font:inherit;font-size:15px}
+.mon button:disabled{opacity:.3; cursor:default}
+.mlist .mm{display:flex; justify-content:space-between; align-items:baseline;
+   padding:10px 2px; border-top:1px solid var(--linia); cursor:pointer}
+.mlist .mm:first-child{border-top:none}
+.mlist .mm .n1{font-weight:600; font-size:13.5px}
+.mlist .mm .n2{font-size:11px; color:var(--szary)}
+.mlist .mm .kw{font-weight:700; font-size:13.5px}
+
+/* formularze */
+.f label{display:block; font-size:11px; font-weight:700; color:var(--szary); text-transform:uppercase;
+   letter-spacing:.5px; margin:12px 2px 6px}
+.f select,.f textarea,.f input{width:100%; border:1px solid var(--linia); background:var(--karta);
+   color:inherit; font:inherit; font-size:13.5px; border-radius:12px; padding:11px 12px;
+   outline:none; resize:none}
+.f select:focus,.f textarea:focus,.f input:focus{border-color:var(--akcent-moc)}
+.przycisk{width:100%; border:0; background:var(--grad); color:var(--on-akcent);
+   font:inherit; font-weight:700; font-size:14.5px; padding:13px; border-radius:14px; cursor:pointer}
+.przycisk-drugi{width:100%; border:1.5px solid var(--linia); background:var(--karta); color:var(--szary);
+   font:inherit; font-weight:600; font-size:13px; padding:11px; border-radius:14px; cursor:pointer; margin-top:8px}
+.fnote{font-size:10.5px; color:var(--szary); text-align:center; margin-top:8px; line-height:1.4}
+
+/* komunikaty (wzorzec rodziny) */
+.komunikat{border-radius:12px; padding:12px 14px; margin:10px 0 2px; font-size:13px; display:none; line-height:1.45}
+.komunikat.ok{display:block; background:var(--bg-ok); border:1px solid var(--ok); color:var(--ok)}
+.komunikat.blad{display:block; background:var(--bg-blad); border:1px solid var(--blad); color:var(--blad)}
+.komunikat.uwaga{display:block; background:var(--bg-uwaga); border:1px solid var(--uwaga); color:var(--uwaga)}
+
+/* kolejka offline (E-40/D50 z rodziny) */
+.kolejka-karta{border:1px solid var(--uwaga); background:var(--bg-uwaga); border-radius:12px;
+   padding:10px 12px; margin:10px 0; font-size:12px; color:var(--uwaga)}
+.kolejka-karta b{display:block; font-size:12.5px; margin-bottom:2px}
+.kolejka-karta .k-akcje{margin-top:7px; display:flex; gap:7px}
+.k-btn{border:1.5px solid var(--ok); background:var(--bg-ok); color:var(--ok); font:inherit;
+   font-size:11px; font-weight:700; padding:5px 12px; border-radius:9px; cursor:pointer}
+.k-btn.usun{border-color:var(--blad); background:var(--bg-blad); color:var(--blad)}
+
+/* overlay zapisu (Z-87) */
+.overlay-zapis{position:fixed; inset:0; background:rgba(15,17,21,.55); display:none;
+   align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:50}
+.overlay-zapis.on{display:flex}
+.overlay-zapis .spinner{width:42px; height:42px; border-radius:50%; position:relative}
+.overlay-zapis .spinner::before{content:''; position:absolute; inset:0; border-radius:50%;
+   border:4px solid rgba(255,255,255,.25)}
+.overlay-zapis .spinner::after{content:''; position:absolute; inset:0; border-radius:50%;
+   border:4px solid transparent; border-top-color:#fff; animation:kreciSie .8s linear infinite}
+.overlay-zapis .tekst{color:#fff; font-size:14px; font-weight:600}
+@keyframes kreciSie{to{transform:rotate(360deg)}}
+
+/* ustawienia */
+.ust label{display:block}
+.opcje{display:flex; gap:8px; margin-top:4px}
+.opcja{flex:1; border:1.5px solid var(--linia); background:var(--karta); color:var(--szary);
+   font:inherit; font-size:12.5px; font-weight:600; padding:10px; border-radius:12px;
+   cursor:pointer; text-align:center; transition:border-color .2s,color .2s}
+.opcja.on{border-color:var(--akcent); color:var(--akcent); font-weight:700}
+.palety{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px}
+.paleta{border:1.5px solid var(--linia); background:var(--karta); border-radius:12px;
+   padding:9px 6px; cursor:pointer; text-align:center; transition:border-color .2s}
+.paleta.on{border-color:var(--akcent)}
+.paleta .sw{height:22px; border-radius:8px; margin-bottom:6px}
+.paleta.spec .sw{background-size:250% 250%; animation:zorzaPlyn 5s ease-in-out infinite}
+.paleta .pn{font-size:10.5px; font-weight:600; color:var(--szary)}
+.paleta.on .pn{color:var(--tekst); font-weight:700}
+
+/* stopka wersji (W-22) */
+.stopka-wersji{margin-top:16px; text-align:center; font-size:10px; color:var(--szary);
+   opacity:.35; font-variant-numeric:tabular-nums; user-select:text}
+
+/* logowanie */
+#widokLogin{flex:1; display:flex; flex-direction:column; justify-content:center; padding:26px 22px 60px}
+#widokLogin .logo{width:84px; height:84px; border-radius:22px; margin:0 auto 16px; display:block;
+   box-shadow:0 8px 24px rgba(15,23,32,.25)}
+#widokLogin h1{text-align:center; font-size:21px; margin:0 0 4px; letter-spacing:-.3px}
+#widokLogin .pod{text-align:center; color:var(--szary); font-size:12.5px; margin:0 0 22px}
+#widokLogin input{text-align:center; font-size:16px; letter-spacing:2px; text-transform:uppercase;
+   font-family:ui-monospace,Consolas,monospace}
+
+/* dolna nawigacja + wskaźnik Z-95 */
+nav{display:flex; border-top:1px solid var(--linia); background:var(--karta);
+   padding:4px 4px calc(8px + env(safe-area-inset-bottom)); position:sticky; bottom:0; z-index:5}
+nav button{flex:1; border:0; background:none; color:var(--szary); font:inherit; font-size:9.5px;
+   display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0 4px;
+   cursor:pointer; border-radius:12px; transition:color .2s}
+nav button svg{width:21px;height:21px;stroke:currentColor; transition:transform .2s}
+nav button.on{color:var(--akcent); font-weight:700}
+nav button.on svg{transform:translateY(-1px)}
+nav button.zg .plus{width:40px;height:40px;border-radius:50%;background:var(--grad);
+   display:flex;align-items:center;justify-content:center;margin-top:-16px;
+   box-shadow:0 5px 14px rgba(0,0,0,.22); transition:transform .2s}
+nav button.zg.on .plus{transform:scale(1.07)}
+nav button.zg .plus svg{stroke:#fff;width:20px;height:20px}
+nav .wskaznik{position:absolute; top:0; left:0; width:20%; height:3px;
+   display:flex; justify-content:center; pointer-events:none;
+   transition:transform .34s cubic-bezier(.4,1.3,.5,1), opacity .18s linear}
+nav .wskaznik i{width:44%; height:100%; border-radius:0 0 2px 2px;
+   background:var(--wskaznik-grad); background-size:300% 100%;
+   animation:plyn 6s linear infinite}
+nav .wskaznik.bez-zakladki{opacity:0}
+@keyframes plyn{to{background-position:300% 0}}
+
+.scr{display:none} .scr.on{display:block; animation:wejscieEkranu .22s ease-out}
+@keyframes wejscieEkranu{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+.ukryte{display:none !important}
+
+@media (prefers-reduced-motion: reduce){
+  .scr.on{animation:none}
+  nav .wskaznik{transition:opacity .18s linear}
+  nav .wskaznik i{animation:none}
+  .overlay-zapis .spinner::after{animation-duration:1.6s}
+  [data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,[data-paleta="zorza"] nav .plus,
+  [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,[data-paleta="rgb"] nav .plus,
+  .paleta.spec .sw{animation:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGOWANIE (kod osobisty; weryfikacja wyłącznie na serwerze) -->
+  <div id="widokLogin" class="ukryte">
+    <img class="logo" src="ikona-192.png" alt="Asystent Floty">
+    <h1>Asystent Floty</h1>
+    <p class="pod">Rinkon — sprawy, maszyny i koszty floty</p>
+    <div class="f">
+      <div class="komunikat" id="loginKomunikat"></div>
+      <label for="loginKod">Kod osobisty</label>
+      <input id="loginKod" autocomplete="off" autocapitalize="characters"
+             spellcheck="false" placeholder="XXXX-XXXX-XXXX">
+      <button class="przycisk" id="loginBtn" style="margin-top:16px">Wejdź</button>
+      <div class="fnote">kod dostajesz od Marka · zapamiętany na tym telefonie</div>
+    </div>
+  </div>
+
+  <!-- APLIKACJA -->
+  <div id="widokApp" class="ukryte" style="display:flex; flex-direction:column; flex:1">
+    <header>
+      <img class="mark" src="ikona-192.png" alt="Rinkon">
+      <div class="naglowek-tekst">
+        <div class="tt">Asystent Floty</div>
+        <div class="kto" id="kto"></div>
+      </div>
+      <button class="gear" id="gearBtn" title="Ustawienia" aria-label="Ustawienia"></button>
+    </header>
+
+    <main>
+      <div class="scr" data-s="puls"><div id="ekranPuls"></div></div>
+      <div class="scr" data-s="szukaj"><div id="ekranSzukaj"></div></div>
+      <div class="scr" data-s="karta"><div id="ekranKarta"></div></div>
+      <div class="scr" data-s="sprawy"><div id="ekranSprawy"></div></div>
+      <div class="scr" data-s="sprawa"><div id="ekranSprawa"></div></div>
+      <div class="scr" data-s="koszty"><div id="ekranKoszty"></div></div>
+      <div class="scr" data-s="zglos"><div id="ekranZglos"></div></div>
+      <div class="scr" data-s="ustawienia"><div id="ekranUstawienia"></div></div>
+    </main>
+
+    <nav>
+      <div class="wskaznik"><i></i></div>
+      <button data-n="puls"></button>
+      <button data-n="szukaj"></button>
+      <button data-n="zglos" class="zg"></button>
+      <button data-n="sprawy"></button>
+      <button data-n="koszty" id="navKoszty"></button>
+    </nav>
+  </div>
+
+  <div class="overlay-zapis" id="overlay"><div class="spinner"></div>
+    <div class="tekst" id="overlayTekst">Zapisuję…</div></div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ========================================================================== */
+/* ASYSTENT FLOTY — logika. Zasada #1: statusów NIE ustawia się w aplikacji.  */
+/* ========================================================================== */
+'use strict';
+
+/* ---------- ikony SVG (DNA rodziny: svg, nie emoji) ---------- */
+var I = {
+  puls:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 8-6-16-3 8H2"/></svg>',
+  lupa:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  sprawy:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>',
+  koszty:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>',
+  kop:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h10v3H3z"/><circle cx="5.5" cy="20" r="1"/><circle cx="10.5" cy="20" r="1"/><path d="M8 17v-5h4l3-5 4 2-3 5v3"/></svg>',
+  auto:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-6h11l3 6"/><path d="M3 13h18v5h-2"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M10 18h5"/></svg>',
+  inne:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5h8v2"/></svg>',
+  wr:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14 13l-3-3z"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M15 18l-6-6 6-6"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01c.26.63.87 1.04 1.56 1.04H21a2 2 0 1 1 0 4h-.09c-.69 0-1.3.41-1.51 1.04z"/></svg>'
+};
+function ikonaRodzaju(kod){ return kod==='kop'?I.kop : kod==='os'||kod==='dost'?I.auto : I.inne; }
+
+/* ---------- stan ---------- */
+var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
+          motyw:'asystent_motyw', paleta:'asystent_paleta' };
+var dane = null;            /* ostatnia odpowiedz akcji "dane" */
+var aktualny = 'puls', poprzedni = 'puls';
+var biezacaMaszyna = null, biezacaSprawa = null;
+var wersjaSW = null;
+
+function el(id){ return document.getElementById(id); }
+function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+/* ---------- daty i liczby ---------- */
+function dzis(){ var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function dataZ(iso){ if(!iso) return null; var m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function dniDo(iso){ var d=dataZ(iso); if(!d) return null;
+  return Math.round((d - dzis()) / 86400000); }
+function dataPL(iso){ var d=dataZ(iso); if(!d) return '—';
+  return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }
+function czasPL(iso){ if(!iso) return '—'; var s=String(iso);
+  return dataPL(s) + (s.length>10 ? ', '+s.slice(11,16) : ''); }
+function zl(n){ if(typeof n!=='number') return '—';
+  return n.toLocaleString('pl-PL',{minimumFractionDigits:2, maximumFractionDigits:2})+' zł'; }
+var MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec',
+                'sierpień','wrzesień','październik','listopad','grudzień'];
+function uuid(){ return 'k'+Date.now().toString(36)+Math.random().toString(36).slice(2,10); }
+
+/* ---------- statusy: kolor plakietki ---------- */
+function pillStatus(s){
+  var kl = {'Nowe':'green','Wycena':'acc','Umówione':'acc','W realizacji':'amber',
+            'Wykonane':'green','Rozliczone':'szara','Anulowane':'szara'}[s] || 'szara';
+  return '<span class="pill '+kl+'">'+esc(s)+'</span>';
+}
+function czyWToku(s){ return s!=='Rozliczone' && s!=='Anulowane'; }
+
+/* ---------- API ---------- */
+function api(cialo){
+  cialo.token = KONFIG.TOKEN;
+  return fetch(KONFIG.API_URL, {
+    method:'POST', body: JSON.stringify(cialo),
+    /* text/plain = "simple request" — Apps Script nie odpowiada na preflight OPTIONS */
+    headers: {'Content-Type':'text/plain;charset=utf-8'}
+  }).then(function(r){ return r.json(); });
+}
+
+/* ---------- pobranie danych (lustro + skrzynka, ciete wg roli) ---------- */
+var trwaPobieranie = false;
+function pobierzDane(cicho){
+  if (trwaPobieranie) return Promise.resolve();
+  trwaPobieranie = true;
+  return api({ kod: ls(K.kod), akcja: 'dane' }).then(function(d){
+    trwaPobieranie = false;
+    if (!d.ok){
+      if (/kod|prob/.test(d.blad||'')) { wyloguj(d.blad); }
+      else if (!cicho) stanSync('blad', d.blad || 'błąd serwera');
+      return;
+    }
+    dane = d; dane._pobrano = Date.now();
+    lsSet(K.dane, JSON.stringify(d));
+    rysujWszystko();
+  }).catch(function(){
+    trwaPobieranie = false;
+    stanSync('offline', null);
+  });
+}
+
+var stanSieci = { tryb:'ok', info:null };
+function stanSync(tryb, info){ stanSieci = { tryb:tryb, info:info }; rysujPuls(); }
+
+/* ---------- LOGOWANIE ---------- */
+function pokazLogin(kom){
+  el('widokLogin').classList.remove('ukryte');
+  el('widokApp').classList.add('ukryte');
+  var lk = el('loginKomunikat');
+  lk.className = 'komunikat' + (kom ? ' blad' : '');
+  lk.textContent = kom || '';
+}
+function wyloguj(kom){
+  lsDel(K.kod); lsDel(K.dane); dane = null;
+  pokazLogin(kom || null);
+}
+el('loginBtn').onclick = function(){
+  var kod = el('loginKod').value.trim().toUpperCase();
+  if (kod.length < 8){ pokazLogin('Kod jest za krótki.'); return; }
+  overlay(true, 'Sprawdzam kod…');
+  api({ kod: kod, akcja: 'dane' }).then(function(d){
+    overlay(false);
+    if (!d.ok){ pokazLogin(d.blad === 'zly token' ? 'Błąd konfiguracji aplikacji.' : (d.blad || 'Nie udało się.')); return; }
+    lsSet(K.kod, kod);
+    dane = d; dane._pobrano = Date.now();
+    lsSet(K.dane, JSON.stringify(d));
+    startAplikacji();
+  }).catch(function(){
+    overlay(false);
+    pokazLogin('Brak połączenia z siecią — spróbuj ponownie.');
+  });
+};
+el('loginKod').addEventListener('keydown', function(e){ if(e.key==='Enter') el('loginBtn').click(); });
+
+/* ---------- NAWIGACJA (wskaźnik Z-95) ---------- */
+var TAB_IDX = { puls:0, szukaj:1, zglos:2, sprawy:3, koszty:4, karta:1, sprawa:3 };
+var NAV_DEF = [['puls','Puls',I.puls],['szukaj','Szukaj',I.lupa],['zglos','',''],
+               ['sprawy','Sprawy',I.sprawy],['koszty','Koszty',I.koszty]];
+function zbudujNav(){
+  var btns = document.querySelectorAll('nav button');
+  NAV_DEF.forEach(function(nd, i){
+    btns[i].innerHTML = nd[0]==='zglos'
+      ? '<span class="plus">'+I.plus+'</span>'
+      : nd[2] + '<span>'+nd[1]+'</span>';
+    btns[i].onclick = function(){ pokaz(nd[0]); };
+  });
+  el('gearBtn').innerHTML = I.gear;
+  el('gearBtn').onclick = function(){
+    pokaz(aktualny==='ustawienia' ? poprzedni : 'ustawienia');
+  };
+}
+function pokaz(k){
+  if (k !== 'ustawienia') poprzedni = k;
+  aktualny = k;
+  document.querySelectorAll('.scr').forEach(function(e){
+    e.classList.toggle('on', e.dataset.s === k); });
+  document.querySelectorAll('nav button').forEach(function(b){
+    b.classList.toggle('on', TAB_IDX[k] !== undefined && b.dataset.n === NAV_DEF[TAB_IDX[k]][0]); });
+  var wsk = document.querySelector('nav .wskaznik');
+  if (TAB_IDX[k] === undefined) wsk.classList.add('bez-zakladki');
+  else { wsk.classList.remove('bez-zakladki');
+         wsk.style.transform = 'translateX(' + TAB_IDX[k]*100 + '%)'; }
+  el('gearBtn').classList.toggle('on', k === 'ustawienia');
+  if (k === 'puls') rysujPuls();          /* puls zawsze swiezy (kolejka, liczby) */
+  window.scrollTo(0, 0);
+}
+
+/* ---------- PULS ---------- */
+function rysujPuls(){
+  if (!dane) return;
+  var sp = dane.sprawy || [], skrz = dane.skrzynka || [];
+  var wToku = sp.filter(function(s){ return czyWToku(s.status); });
+  var poTerminie = wToku.filter(function(s){ var d = dniDo(s.termin); return d !== null && d < 0; });
+  var terminDzis = wToku.filter(function(s){ return dniDo(s.termin) === 0; });
+  var wSerwisie = wToku.filter(function(s){ return s.status === 'W realizacji'; });
+
+  var uwaga = [];
+  poTerminie.forEach(function(s){ uwaga.push([s, '<span class="pill red">po terminie '+(-dniDo(s.termin))+' dn.</span>']); });
+  terminDzis.forEach(function(s){ uwaga.push([s, '<span class="pill amber">termin DZIŚ</span>']); });
+  wToku.forEach(function(s){
+    if (s.status==='Wycena'){ var od = -(dniDo(s.status_od)||0);
+      uwaga.push([s, '<span class="pill acc">wycena · '+(od+1)+'. dzień</span>']); }
+  });
+  var widziane = {};
+  uwaga = uwaga.filter(function(p){ if(widziane[p[0].id]) return false; widziane[p[0].id]=true; return true; });
+
+  var h = '';
+  /* pasek "dane z" */
+  var meta = dane.meta || {};
+  var klasa = stanSieci.tryb==='ok' ? '' : ' '+stanSieci.tryb;
+  var opis = stanSieci.tryb==='offline' ? 'offline — pokazuję ostatnie pobrane dane'
+           : stanSieci.tryb==='blad' ? 'błąd: '+esc(stanSieci.info||'')
+           : 'dane z: <b>'+esc(meta.aktualizacja||'—')+'</b>';
+  h += '<div class="pasek-sync'+klasa+'"><span class="kropka"></span>'+opis+
+       '<button class="odsw" onclick="pobierzDane()">odśwież</button></div>';
+
+  h += kolejkaHTML();
+
+  if (skrz.length){
+    h += '<div class="h">W skrzynce — czeka na przetworzenie</div><div class="karta">';
+    skrz.forEach(function(w){
+      h += '<div class="row" style="cursor:default"><div class="ic">'+I.sprawy+'</div><div class="mid">'+
+        '<div class="t1">'+esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+'</div>'+
+        '<div class="t2">'+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+esc((w.tresc||'').slice(0,70))+'…</div></div>'+
+        '<span class="pill amber">czeka</span></div>';
+    });
+    h += '</div>';
+  }
+
+  h += '<div class="h">Dziś wymaga uwagi</div>';
+  if (!uwaga.length) h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div></div>';
+  else {
+    h += '<div class="karta">';
+    uwaga.slice(0,6).forEach(function(p){
+      var s = p[0], m = maszynaSprawy(s);
+      h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
+        '<div class="ic k-'+(m?m.rodzaj_kod:'inne')+'">'+ikonaRodzaju(m?m.rodzaj_kod:'inne')+'</div>'+
+        '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
+        '<div class="t2">'+esc(s.maszyna||'')+' · '+esc(s.status)+'</div></div>'+p[1]+'</div>';
+    });
+    h += '</div>';
+  }
+
+  h += '<div class="h">Flota w liczbach</div><div class="stats">'+
+    '<div class="stat"><div class="n">'+wToku.length+'</div><div class="l">sprawy w toku</div></div>'+
+    '<div class="stat"><div class="n'+(terminDzis.length?' uw':'')+'">'+terminDzis.length+'</div><div class="l">termin dziś</div></div>'+
+    '<div class="stat"><div class="n">'+wSerwisie.length+'</div><div class="l">w serwisie</div></div>'+
+    '<div class="stat"><div class="n'+(poTerminie.length?' zl':'')+'">'+poTerminie.length+'</div><div class="l">po terminie</div></div></div>';
+
+  h += '<div class="stopka-wersji" id="stopkaWersji"></div>';
+  el('ekranPuls').innerHTML = h;
+  pokazWersje();
+}
+function maszynaSprawy(s){
+  if (!dane || !s.id_pojazdu) return null;
+  return (dane.maszyny||[]).find(function(m){ return m.id === s.id_pojazdu; }) || null;
+}
+
+/* ---------- SZUKAJ + KARTA MASZYNY ---------- */
+var filtrKat = 'wszystkie', filtrTekst = '';
+function rysujSzukaj(){
+  if (!dane) return;
+  var h = '<div class="szukajka">'+I.lupa+
+    '<input id="szukInput" placeholder="Szukaj maszyny… (np. JCB, WP 6865P)" value="'+esc(filtrTekst)+'"></div>';
+  var katy = [['wszystkie','Wszystkie'],['kop','Koparki'],['os','Osobowe'],['dost','Dostawcze'],['inne','Inne']];
+  h += '<div class="chips">'+katy.map(function(k){
+    return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
+  }).join('')+'</div>';
+  var lista = (dane.maszyny||[]).filter(function(m){
+    if (filtrKat!=='wszystkie' && m.rodzaj_kod!==filtrKat) return false;
+    if (!filtrTekst) return true;
+    var t = filtrTekst.toLowerCase();
+    return (m.nazwa||'').toLowerCase().indexOf(t)>=0 ||
+           (m.rejestracja||'').toLowerCase().indexOf(t)>=0 ||
+           (m.kierowca||'').toLowerCase().indexOf(t)>=0;
+  });
+  h += '<div class="karta">';
+  if (!lista.length) h += '<div class="pusto">Nic nie pasuje do szukania.</div>';
+  lista.forEach(function(m){
+    h += '<div class="mrow" onclick="otworzMaszyne(\''+m.id+'\')">'+
+      '<span class="ik ic k-'+m.rodzaj_kod+'">'+ikonaRodzaju(m.rodzaj_kod)+'</span>'+
+      '<span class="nm">'+esc(m.nazwa)+'</span>'+
+      '<span class="reg">'+esc(m.rejestracja||'—')+'</span><span class="chev">›</span></div>';
+  });
+  h += '</div>';
+  el('ekranSzukaj').innerHTML = h;
+  var inp = el('szukInput');
+  inp.oninput = function(){ filtrTekst = inp.value;
+    rysujSzukaj(); var i2 = el('szukInput'); i2.focus(); i2.setSelectionRange(i2.value.length, i2.value.length); };
+}
+function ustawKat(k){ filtrKat = k; rysujSzukaj(); }
+
+function terminHTML(nazwa, iso){
+  if (!iso) return '<div class="term"><div class="k">'+nazwa+'</div><div class="v nd">N.D.</div></div>';
+  var d = dniDo(iso), kl = 'ok', dop = '';
+  if (d !== null){
+    if (d < 0){ kl = 'zl'; dop = -d + ' dn. temu'; }
+    else if (d <= 30){ kl = 'uw'; dop = 'za ' + d + ' dn.'; }
+    else dop = 'za ' + d + ' dn.';
+  }
+  return '<div class="term"><div class="k">'+nazwa+'</div><div class="v '+kl+'">'+dataPL(iso)+
+         '</div><div class="dni">'+dop+'</div></div>';
+}
+function otworzMaszyne(id){
+  biezacaMaszyna = id; rysujKartaMaszyny(); pokaz('karta');
+}
+function rysujKartaMaszyny(){
+  var m = (dane.maszyny||[]).find(function(x){ return x.id === biezacaMaszyna; });
+  if (!m){ el('ekranKarta').innerHTML = ''; return; }
+  var h = '<div class="hero"><span class="back" onclick="pokaz(\'szukaj\')">'+I.back+' maszyny</span>'+
+    '<div class="nm">'+esc(m.nazwa)+'</div><div class="meta">'+
+    '<span class="reg">'+esc(m.rejestracja||'bez rejestracji')+'</span>'+
+    '<span>'+esc(m.rodzaj||'')+'</span>'+
+    (m.kierowca ? '<span>· '+esc(m.kierowca)+'</span>' : '')+'</div></div>';
+  h += '<div class="terms">'+terminHTML('Badanie', m.terminy.badanie)+
+       terminHTML('OC', m.terminy.oc)+terminHTML('UDT', m.terminy.udt)+
+       terminHTML('Mienie', m.terminy.mienie)+'</div>';
+
+  var spr = (dane.sprawy||[]).filter(function(s){ return s.id_pojazdu === m.id; });
+  h += '<div class="h">Sprawy tej maszyny</div><div class="karta">';
+  if (!spr.length) h += '<div class="pusto">Brak spraw — i dobrze.</div>';
+  spr.forEach(function(s){
+    h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
+      '<div class="ic k-'+m.rodzaj_kod+'">'+I.wr+'</div>'+
+      '<div class="mid"><div class="t1">'+esc(s.tytul||'')+'</div>'+
+      '<div class="t2">'+esc(s.id)+' · '+esc(czasPL(s.utworzono))+'</div></div>'+pillStatus(s.status)+'</div>';
+  });
+  h += '</div>';
+
+  if (dane.koszty){
+    var rokTeraz = new Date().getFullYear(), suma = 0, ile = 0;
+    (dane.koszty||[]).forEach(function(mi){
+      if (mi.rok !== rokTeraz) return;
+      var klucze = [m.rejestracja, m.nazwa];
+      Object.keys(mi.maszyny||{}).forEach(function(k){
+        if (klucze.indexOf(k) >= 0){ suma += mi.maszyny[k]; ile++; } });
+    });
+    h += '<div class="h">Koszty '+rokTeraz+'</div><div class="karta"><div class="big">'+zl(Math.round(suma*100)/100)+
+      '</div><div class="fnote" style="text-align:left">'+(ile? 'suma z lustra kosztów (rok bieżący)' :
+      'brak dopasowanych kosztów w tym roku')+'</div></div>';
+  }
+  el('ekranKarta').innerHTML = h;
+}
+
+/* ---------- SPRAWY + KARTA SPRAWY ---------- */
+var filtrSpraw = 'toku';
+function rysujSprawy(){
+  if (!dane) return;
+  var sp = dane.sprawy || [], skrz = dane.skrzynka || [];
+  var h = '<div class="chips" style="margin-top:10px">'+
+    '<button class="chip'+(filtrSpraw==='toku'?' on':'')+'" onclick="ustawFiltrSpraw(\'toku\')">W toku</button>'+
+    '<button class="chip'+(filtrSpraw==='wszystkie'?' on':'')+'" onclick="ustawFiltrSpraw(\'wszystkie\')">Wszystkie</button></div>';
+
+  var nowe = skrz.filter(function(w){ return w.rodzaj !== 'dopisek'; });
+  if (nowe.length){
+    h += '<div class="h">Świeże ze skrzynki · '+nowe.length+'</div><div class="karta">';
+    nowe.forEach(function(w){
+      h += '<div class="row" style="cursor:default"><div class="ic">'+I.sprawy+'</div><div class="mid">'+
+        '<div class="t1">'+esc(w.maszyna||'Zgłoszenie')+(w.typ?' · '+esc(w.typ):'')+'</div>'+
+        '<div class="t2">'+esc(w.s_id)+' · '+esc(w.kto||'')+' · '+esc((w.tresc||'').slice(0,80))+'</div></div>'+
+        '<span class="pill amber">czeka</span></div>';
+    });
+    h += '<div class="fnote">status nada się przy przetwarzaniu — statusy wynikają z treści</div></div>';
+  }
+
+  var lista = sp.filter(function(s){ return filtrSpraw==='wszystkie' || czyWToku(s.status); });
+  lista.sort(function(a,b){
+    var pa = dniDo(a.termin), pb = dniDo(b.termin);
+    var wa = (pa!==null && pa<=0) ? pa : 999, wb = (pb!==null && pb<=0) ? pb : 999;
+    if (wa!==wb) return wa-wb;
+    return String(b.utworzono||'').localeCompare(String(a.utworzono||''));
+  });
+  h += '<div class="h">'+(filtrSpraw==='toku'?'W toku':'Wszystkie')+' · '+lista.length+'</div><div class="karta">';
+  if (!lista.length) h += '<div class="pusto">Pusto.</div>';
+  lista.forEach(function(s){
+    var m = maszynaSprawy(s), d = dniDo(s.termin);
+    var extra = (d!==null && d<0 && czyWToku(s.status)) ? '<span class="pill red">po terminie</span>'
+              : (d===0 && czyWToku(s.status)) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status);
+    h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
+      '<div class="ic k-'+(m?m.rodzaj_kod:'inne')+'">'+ikonaRodzaju(m?m.rodzaj_kod:'inne')+'</div>'+
+      '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
+      '<div class="t2">'+esc(s.id)+' · '+esc(s.maszyna||'')+'</div></div>'+extra+'</div>';
+  });
+  h += '</div>';
+  el('ekranSprawy').innerHTML = h;
+}
+function ustawFiltrSpraw(f){ filtrSpraw = f; rysujSprawy(); }
+
+function otworzSprawe(id){
+  biezacaSprawa = id; rysujKartaSprawy(); pokaz('sprawa');
+}
+function rysujKartaSprawy(){
+  var s = (dane.sprawy||[]).find(function(x){ return x.id === biezacaSprawa; });
+  if (!s){ el('ekranSprawa').innerHTML = ''; return; }
+  var m = maszynaSprawy(s);
+  var h = '<span class="sp-back" onclick="pokaz(\'sprawy\')">'+I.back+' sprawy</span>'+
+    '<div class="karta"><div class="sp-title"><div class="t">'+esc(s.tytul||s.maszyna)+'</div>'+pillStatus(s.status)+'</div>'+
+    '<div class="meta2">'+
+    '<div class="m"><div class="k">Sprawa</div><div class="v">'+esc(s.id)+' · '+esc(s.typ||'—')+'</div></div>'+
+    '<div class="m" '+(m?'style="cursor:pointer" onclick="otworzMaszyne(\''+m.id+'\')"':'')+'>'+
+      '<div class="k">Maszyna</div><div class="v">'+esc(m ? m.nazwa+(m.rejestracja?' · '+m.rejestracja:'') : s.maszyna||'—')+'</div></div>'+
+    '<div class="m"><div class="k">Zgłosił</div><div class="v">'+esc(s.zglosil||'—')+' · '+esc(dataPL(s.utworzono))+'</div></div>'+
+    '<div class="m"><div class="k">Termin</div><div class="v">'+esc(s.termin ? dataPL(s.termin) : '—')+'</div></div>'+
+    '</div></div>';
+  if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
+    '<div style="font-size:12.5px; line-height:1.45">'+esc(s.notatki)+'</div></div>';
+  h += '<div class="h">Opis — dosłownie, jak podano</div><div class="karta"><p class="surowy">'+esc(s.opis||'')+'</p></div>';
+
+  var czekajace = (dane.skrzynka||[]).filter(function(w){ return w.rodzaj==='dopisek' && w.dotyczy===s.id; });
+  h += '<div class="h">Historia</div><div class="karta"><div class="tl">';
+  czekajace.forEach(function(w){
+    h += '<div class="te czeka"><div class="td">'+esc(w.utworzono)+' · '+esc(w.kto)+
+      ' <span class="pill amber">czeka</span></div><div class="tx">'+esc(w.tresc)+'</div></div>';
+  });
+  (s.historia||[]).slice().reverse().forEach(function(w){
+    h += '<div class="te'+(w.typ==='utworzenie'?'':' ')+'"><div class="td">'+esc(czasPL(w.data))+' · '+esc(w.kto||'')+
+      ' · '+esc(w.typ||'')+'</div><div class="tx">'+esc(w.typ==='utworzenie' ? 'utworzenie sprawy — pełna treść wyżej, w „Opis"' : (w.tresc||''))+
+      (w.zmiana ? ' <span class="pill szara">'+esc(w.zmiana)+'</span>' : '')+'</div></div>';
+  });
+  h += '</div></div>';
+
+  h += '<div class="h">Dopisz do sprawy</div><div class="karta f">'+
+    '<div class="komunikat" id="dopiszKomunikat"></div>'+
+    '<textarea id="dopiszTresc" rows="3" placeholder="np. odebrane, faktura 1 890 zł netto — status sam się zmieni"></textarea>'+
+    '<button class="przycisk" style="margin-top:9px" onclick="wyslijDopisek()">Dopisz</button>'+
+    '<div class="fnote">sprawy się nie edytuje w polach — dopisujesz treść, a status wynika z treści;<br>każdy dopisek zostaje w Historii</div></div>';
+  el('ekranSprawa').innerHTML = h;
+}
+
+/* ---------- KOSZTY ---------- */
+var kosztyIdx = 0, kosztyKv = 'kat';
+function rysujKoszty(){
+  if (!dane) return;
+  if (!dane.koszty){ el('ekranKoszty').innerHTML =
+    '<div class="karta" style="margin-top:12px"><div class="pusto">Koszty widzą role Szef i Admin.</div></div>'; return; }
+  var KOS = dane.koszty;
+  if (kosztyIdx >= KOS.length) kosztyIdx = 0;
+  var h = '<div class="seg">'+[['kat','Kategorie'],['masz','Maszyny'],['mies','Miesiące']].map(function(p){
+    return '<button class="'+(kosztyKv===p[0]?'on':'')+'" onclick="ustawKoszty(\''+p[0]+'\')">'+p[1]+'</button>';
+  }).join('')+'</div>';
+
+  if (kosztyKv === 'mies'){
+    h += '<div class="karta mlist">';
+    KOS.forEach(function(mi, i){
+      h += '<div class="mm" onclick="wybierzMiesiac('+i+')"><div>'+
+        '<div class="n1">'+MIESIACE[mi.miesiac-1]+' '+mi.rok+'</div>'+
+        '<div class="n2">'+mi.faktur+' pozycji</div></div>'+
+        '<div class="kw">'+zl(mi.suma)+'</div></div>';
+    });
+    h += '</div><div class="fnote">koszty z lustra: rok bieżący + poprzedni · sumy liczy synchronizacja, nie telefon</div>';
+  } else {
+    var mi = KOS[kosztyIdx];
+    h += '<div class="mon"><button onclick="krokMiesiac(1)" '+(kosztyIdx>=KOS.length-1?'disabled':'')+'>‹</button>'+
+      '<span class="mn">'+MIESIACE[mi.miesiac-1].charAt(0).toUpperCase()+MIESIACE[mi.miesiac-1].slice(1)+' '+mi.rok+'</span>'+
+      '<button onclick="krokMiesiac(-1)" '+(kosztyIdx<=0?'disabled':'')+'>›</button></div>';
+    h += '<div class="karta"><div class="big">'+zl(mi.suma)+' <small>· '+mi.faktur+' pozycji</small></div>';
+    var grupy = kosztyKv==='kat' ? mi.kategorie : mi.maszyny;
+    var maxy = 0; Object.keys(grupy).forEach(function(k){ if (grupy[k]>maxy) maxy=grupy[k]; });
+    var klucze = Object.keys(grupy);
+    if (kosztyKv==='masz') klucze = klucze.slice(0, 14);
+    klucze.forEach(function(k){
+      var maszyna = kosztyKv==='masz' ? (dane.maszyny||[]).find(function(m){
+        return m.rejestracja===k || m.nazwa===k; }) : null;
+      var kl = maszyna ? 'c-'+maszyna.rodzaj_kod : (kosztyKv==='masz' ? 'c-none' : '');
+      h += '<div class="krow"><div class="kl"><span>'+esc(k)+'</span><b>'+zl(grupy[k])+'</b></div>'+
+        '<div class="ktr"><div class="kfl '+kl+'" style="width:'+Math.max(4, Math.round(grupy[k]/maxy*100))+'%"></div></div></div>';
+    });
+    if (kosztyKv==='masz' && Object.keys(grupy).length > 14)
+      h += '<div class="fnote">pokazuję 14 największych z '+Object.keys(grupy).length+'</div>';
+    h += '</div>';
+    if (kosztyKv==='masz') h += '<div class="fnote">paski w kolorach kategorii pojazdów</div>';
+  }
+  el('ekranKoszty').innerHTML = h;
+}
+function ustawKoszty(kv){ kosztyKv = kv; rysujKoszty(); }
+function krokMiesiac(d){ kosztyIdx += d; rysujKoszty(); }
+function wybierzMiesiac(i){ kosztyIdx = i; kosztyKv = 'kat'; rysujKoszty(); }
+
+/* ---------- ZGŁOŚ (+ kolejka offline E-40/D50) ---------- */
+var wybranyTyp = 'Awaria';
+function rysujZglos(){
+  if (!dane) return;
+  var h = '<div class="f">'+
+    '<div class="komunikat" id="zglosKomunikat"></div>'+
+    '<label>Maszyna</label><select id="zgMaszyna">';
+  (dane.maszyny||[]).forEach(function(m){
+    h += '<option value="'+esc(m.id)+'">'+esc(m.nazwa)+(m.rejestracja?' — '+esc(m.rejestracja):'')+'</option>';
+  });
+  h += '<option value="">— nie wiem / inna (opisz w treści)</option></select>';
+  h += '<label>Typ</label><div class="chips" id="zgTypy">'+
+    ['Awaria','Serwis','Przegląd','Zakup','Inne'].map(function(t){
+      return '<button class="chip'+(t===wybranyTyp?' on':'')+'" onclick="ustawTyp(\''+t+'\')">'+t+'</button>';
+    }).join('')+'</div>';
+  h += '<label>Co się dzieje?</label>'+
+    '<textarea id="zgTresc" rows="5" placeholder="np. pękł wąż hydrauliczny, Janek załatwił u Hydromexu, 800 zł gotówką"></textarea>'+
+    '<button class="przycisk" style="margin-top:16px" onclick="wyslijZgloszenie()">Wyślij zgłoszenie</button>'+
+    '<div class="fnote">wpis trafia do skrzynki i dostaje status „Nowe" —<br>statusów nie ustawiasz, wynikają z treści</div></div>';
+  el('ekranZglos').innerHTML = h;
+}
+function ustawTyp(t){ wybranyTyp = t; rysujZglos(); }
+
+function kolejka(){ try{ return JSON.parse(ls(K.kolejka)||'[]'); }catch(e){ return []; } }
+function zapiszKolejke(k){ lsSet(K.kolejka, JSON.stringify(k)); }
+function kolejkaHTML(){
+  var k = kolejka();
+  if (!k.length) return '';
+  var h = '';
+  k.forEach(function(w, i){
+    h += '<div class="kolejka-karta"><b>Niewysłane: '+esc(w.rodzaj==='dopisek'?'dopisek do '+(w.dotyczy||'sprawy'):'zgłoszenie')+'</b>'+
+      esc((w.tresc||'').slice(0,90))+'…'+
+      '<div class="k-akcje"><button class="k-btn" onclick="wyslijKolejke()">Spróbuj ponownie</button>'+
+      '<button class="k-btn usun" onclick="usunZKolejki('+i+')">Usuń</button></div></div>';
+  });
+  return h;
+}
+function usunZKolejki(i){
+  var k = kolejka(); k.splice(i,1); zapiszKolejke(k); rysujPuls();
+}
+function dodajDoKolejki(wpis){
+  var k = kolejka(); k.push(wpis); zapiszKolejke(k);
+}
+var trwaKolejka = false;
+function wyslijKolejke(){
+  if (trwaKolejka) return;
+  var k = kolejka();
+  if (!k.length || !navigator.onLine) return;
+  trwaKolejka = true;
+  var w = k[0];
+  api({ kod: ls(K.kod), akcja:'zglos', rodzaj:w.rodzaj, dotyczy:w.dotyczy,
+        maszyna:w.maszyna, typ:w.typ, tresc:w.tresc, klucz:w.klucz })
+  .then(function(d){
+    trwaKolejka = false;
+    if (d.ok){ var k2 = kolejka(); k2.shift(); zapiszKolejke(k2);
+      pobierzDane(true); rysujPuls();
+      if (k2.length) wyslijKolejke(); }
+  }).catch(function(){ trwaKolejka = false; });
+}
+
+var komTrwaly = null;   /* komunikat ma przezyc ciche przerysowanie ekranu */
+function pokazKomunikat(id, klasa, html){
+  var kom = el(id); if (!kom) return;
+  kom.className = 'komunikat ' + klasa; kom.innerHTML = html;
+  komTrwaly = { id: id, cls: kom.className, html: html };
+}
+function wyslijWpis(wpis, komunikatId, poSukcesie){
+  overlay(true, 'Zapisuję…');
+  api({ kod: ls(K.kod), akcja:'zglos', rodzaj:wpis.rodzaj, dotyczy:wpis.dotyczy,
+        maszyna:wpis.maszyna, typ:wpis.typ, tresc:wpis.tresc, klucz:wpis.klucz })
+  .then(function(d){
+    overlay(false);
+    if (d.ok){
+      pokazKomunikat(komunikatId, 'ok',
+        'Zapisane — wpis <b>'+esc(d.s_id)+'</b> czeka w skrzynce na przetworzenie.');
+      poSukcesie(); pobierzDane(true);
+    } else pokazKomunikat(komunikatId, 'blad', esc(d.blad || 'Nie udało się.'));
+    window.scrollTo(0,0);
+  }).catch(function(){
+    overlay(false);
+    dodajDoKolejki(wpis);
+    pokazKomunikat(komunikatId, 'uwaga',
+      'Brak sieci — wpis zapisany w telefonie (kolejka na Pulsie), wyśle się sam.');
+    poSukcesie();
+  });
+}
+function wyslijZgloszenie(){
+  var tresc = el('zgTresc').value.trim();
+  if (!tresc){ var k=el('zglosKomunikat'); k.className='komunikat blad'; k.textContent='Napisz, co się dzieje.'; return; }
+  var sel = el('zgMaszyna');
+  var m = (dane.maszyny||[]).find(function(x){ return x.id === sel.value; });
+  wyslijWpis({ rodzaj:'zgloszenie', dotyczy:'', maszyna: m ? m.nazwa+(m.rejestracja?' ('+m.rejestracja+')':'') : '',
+               typ: wybranyTyp, tresc: tresc, klucz: uuid() },
+    'zglosKomunikat', function(){ el('zgTresc').value=''; });
+}
+function wyslijDopisek(){
+  var tresc = el('dopiszTresc').value.trim();
+  if (!tresc){ var k=el('dopiszKomunikat'); k.className='komunikat blad'; k.textContent='Napisz treść dopisku.'; return; }
+  wyslijWpis({ rodzaj:'dopisek', dotyczy: biezacaSprawa, maszyna:'', typ:'',
+               tresc: tresc, klucz: uuid() },
+    'dopiszKomunikat', function(){ el('dopiszTresc').value=''; });
+}
+
+/* ---------- USTAWIENIA ---------- */
+var PALETY_DEF = [
+  ['gamma','Gamma','linear-gradient(135deg,#22c55e,#7e22ce)',false],
+  ['zelazna','Żelazna','linear-gradient(135deg,#dc2626,#f59e0b)',false],
+  ['heros','Heros','linear-gradient(135deg,#dc2626,#1d4ed8)',false],
+  ['widmo','Widmo','linear-gradient(135deg,#7c3aed,#ef4444)',false],
+  ['zorza','Zorza','linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899)',true],
+  ['rgb','Pełne RGB','linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff)',true]
+];
+function rysujUstawienia(){
+  var motyw = document.documentElement.dataset.motyw;
+  var paleta = document.documentElement.dataset.paleta;
+  var h = '<div class="h" style="margin-top:12px">Wygląd</div><div class="karta ust">'+
+    '<label class="h" style="margin:2px 2px 8px">Tryb</label><div class="opcje">'+
+    '<button class="opcja'+(motyw==='jasny'?' on':'')+'" onclick="ustawMotyw(\'jasny\')">Jasny</button>'+
+    '<button class="opcja'+(motyw==='ciemny'?' on':'')+'" onclick="ustawMotyw(\'ciemny\')">Ciemny</button></div>'+
+    '<label class="h" style="margin:14px 2px 8px">Paleta</label><div class="palety">';
+  PALETY_DEF.forEach(function(p){
+    if (p[3]) return;
+    h += '<div class="paleta'+(paleta===p[0]?' on':'')+'" onclick="ustawPalete(\''+p[0]+'\')">'+
+      '<div class="sw" style="background:'+p[2]+'"></div><div class="pn">'+p[1]+'</div></div>';
+  });
+  h += '</div><label class="h" style="margin:14px 2px 8px">Palety specjalne</label><div class="palety">';
+  PALETY_DEF.forEach(function(p){
+    if (!p[3]) return;
+    h += '<div class="paleta spec'+(paleta===p[0]?' on':'')+'" onclick="ustawPalete(\''+p[0]+'\')">'+
+      '<div class="sw" style="background:'+p[2]+'"></div><div class="pn">'+p[1]+'</div></div>';
+  });
+  h += '</div><div class="fnote">wybór zapamiętany na tym telefonie</div></div>';
+
+  var os = dane && dane.osoba || {};
+  h += '<div class="h">Konto</div><div class="karta">'+
+    '<div class="row" style="cursor:default"><div class="ic">'+I.sprawy+'</div>'+
+    '<div class="mid"><div class="t1">'+esc(os.imie||'—')+'</div>'+
+    '<div class="t2">rola: '+esc(os.rola||'—')+'</div></div></div>'+
+    '<button class="przycisk-drugi" onclick="wyloguj()">Wyloguj z tego telefonu</button></div>';
+  h += '<div class="stopka-wersji" id="stopkaWersji2"></div>';
+  el('ekranUstawienia').innerHTML = h;
+  pokazWersje();
+}
+function ustawMotyw(m){
+  document.documentElement.dataset.motyw = m; lsSet(K.motyw, m); rysujUstawienia();
+}
+function ustawPalete(p){
+  document.documentElement.dataset.paleta = p; lsSet(K.paleta, p); rysujUstawienia();
+}
+
+/* ---------- overlay + wersje ---------- */
+function overlay(on, tekst){
+  el('overlayTekst').textContent = tekst || 'Zapisuję…';
+  el('overlay').classList.toggle('on', !!on);
+}
+function wersjaWorkera(){
+  return new Promise(function(res){
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return res(null);
+    var t = setTimeout(function(){ res(null); }, 800);
+    var kanal = new MessageChannel();
+    kanal.port1.onmessage = function(e){ clearTimeout(t); res(e.data && e.data.wersja || null); };
+    navigator.serviceWorker.controller.postMessage({ typ:'wersja' }, [kanal.port2]);
+  });
+}
+function pokazWersje(){
+  wersjaWorkera().then(function(sw){
+    wersjaSW = sw || wersjaSW;
+    var api = dane && dane.wersjaApi ? 'API '+dane.wersjaApi : 'API —';
+    var txt = 'Asystent Floty — '+(wersjaSW || 'asystent-v1')+' · '+api;
+    ['stopkaWersji','stopkaWersji2'].forEach(function(id){
+      var e = el(id); if (e) e.textContent = txt; });
+  });
+}
+
+/* ---------- rysowanie zbiorcze + start ---------- */
+function rysujWszystko(){
+  stanSieci = { tryb:'ok', info:null };
+  el('kto').textContent = dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '';
+  el('navKoszty').classList.toggle('ukryte', !dane.koszty);
+  document.querySelector('nav .wskaznik').style.width = dane.koszty ? '20%' : '25%';
+  rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujKoszty(); rysujZglos(); rysujUstawienia();
+  if (aktualny==='karta') rysujKartaMaszyny();
+  if (aktualny==='sprawa') rysujKartaSprawy();
+  if (komTrwaly){ var kk = el(komTrwaly.id);
+    if (kk){ kk.className = komTrwaly.cls; kk.innerHTML = komTrwaly.html; }
+    komTrwaly = null; }
+}
+function startAplikacji(){
+  el('widokLogin').classList.add('ukryte');
+  el('widokApp').classList.remove('ukryte');
+  rysujWszystko();
+  pokaz('puls');
+  wyslijKolejke();
+}
+
+(function boot(){
+  /* motyw + paleta z pamieci telefonu */
+  var m = ls(K.motyw); if (m) document.documentElement.dataset.motyw = m;
+  var p = ls(K.paleta); if (p) document.documentElement.dataset.paleta = p;
+  zbudujNav();
+
+  if ('serviceWorker' in navigator){
+    try{ navigator.serviceWorker.register('service-worker.js'); }catch(e){}
+  }
+  window.addEventListener('online', wyslijKolejke);
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden && navigator.onLine){ wyslijKolejke();
+      if (dane && Date.now() - (dane._pobrano||0) > 120000) pobierzDane(true); }
+  });
+
+  var kod = ls(K.kod);
+  if (!kod){ pokazLogin(null); return; }
+  /* szybki start z pamieci + ciche odswiezenie */
+  var zapisane = ls(K.dane);
+  if (zapisane){ try{ dane = JSON.parse(zapisane); }catch(e){ dane = null; } }
+  if (dane){ startAplikacji(); pobierzDane(true); }
+  else { overlay(true, 'Pobieram dane…');
+    pobierzDane().then(function(){ overlay(false);
+      if (dane) startAplikacji(); else pokazLogin('Nie udało się pobrać danych — sprawdź sieć.'); }); }
+})();
+</script>
+</body>
+</html>
