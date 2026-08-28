@@ -104,10 +104,11 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
 [data-paleta="zorza"] header img.mark,[data-paleta="rgb"] header img.mark{
    box-shadow:0 0 0 2px transparent, 0 2px 10px rgba(0,0,0,.35);
    outline:2px solid transparent; filter:drop-shadow(0 0 6px rgba(255,255,255,.45))}
-[data-paleta="zorza"] .row .ic,[data-paleta="rgb"] .row .ic{
-   background:linear-gradient(var(--karta),var(--karta)) padding-box,
-              conic-gradient(from var(--kat), var(--stozek)) border-box;
-   border:1.5px solid transparent; animation:obrot 6s linear infinite}
+/* ⚠ Kafelki RODZAJU pojazdu NIE dostają tęczowej obwódki w paletach
+   specjalnych. Kolor kategorii (paleta v93) to informacja, nie ozdoba —
+   koparka ma wyglądać tak samo w każdej palecie (uwaga Marka 28.08).
+   Efekty palet specjalnych zostają tam, gdzie nic nie znaczą: nagłówek,
+   przyciski, wskaźnik nawigacji, liczby na kaflach. */
 /* neon pod aktywną zakładką + świecąca ikona (jak w rodzinie) */
 [data-paleta="zorza"] nav .wskaznik i,[data-paleta="rgb"] nav .wskaznik i{
    box-shadow:0 0 9px var(--akcent-moc)}
@@ -177,9 +178,19 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .row .ic{width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;
    justify-content:center;background:var(--wcisk)}
 .row .ic svg{width:17px;height:17px;stroke:var(--szary)}
-.ic.k-kop{background:rgba(106,176,76,.16)}  .ic.k-kop svg{stroke:#6AB04C}
-.ic.k-os{background:rgba(240,147,43,.16)}   .ic.k-os svg{stroke:#F0932B}
-.ic.k-dost{background:rgba(9,132,227,.14)}  .ic.k-dost svg{stroke:#0984E3}
+/* Kolory rodzajów — paleta v93 z Panelu Floty (te same, co w Spisie i na QR):
+   koparki #6AB04C · osobowe #F0932B · ciężarowe #0984E3 · HDS #9B59B6 ·
+   przyczepy #FD79A8 · sprzęt budowlany #7ED6DF · reszta (quad, ciągnik) #636E72 */
+.ic.k-kop{background:rgba(106,176,76,.16)}   .ic.k-kop svg{stroke:#6AB04C}
+.ic.k-osob{background:rgba(240,147,43,.16)}  .ic.k-osob svg{stroke:#F0932B}
+.ic.k-ciez{background:rgba(9,132,227,.14)}   .ic.k-ciez svg{stroke:#0984E3}
+.ic.k-hds{background:rgba(155,89,182,.16)}   .ic.k-hds svg{stroke:#9B59B6}
+.ic.k-przycz{background:rgba(253,121,168,.16)} .ic.k-przycz svg{stroke:#FD79A8}
+.ic.k-bud{background:rgba(126,214,223,.20)}  .ic.k-bud svg{stroke:#3FA9B4}
+.ic.k-quad{background:rgba(99,110,114,.16)}  .ic.k-quad svg{stroke:#636E72}
+.ic.k-inne{background:rgba(99,110,114,.16)}  .ic.k-inne svg{stroke:#636E72}
+[data-motyw="ciemny"] .ic.k-bud svg{stroke:#7ED6DF}
+[data-motyw="ciemny"] .ic.k-quad svg,[data-motyw="ciemny"] .ic.k-inne svg{stroke:#9aa3a8}
 .row .mid{flex:1; min-width:0}
 .row .t1{font-weight:600; font-size:13.5px; line-height:1.3}
 .row .t2{font-size:11.5px; color:var(--szary); margin-top:2px; line-height:1.35}
@@ -275,7 +286,9 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    width:0; animation:wypelnij .75s cubic-bezier(.25,.9,.35,1) forwards;
    animation-delay:var(--zwloka,0ms)}
 @keyframes wypelnij{from{width:0} to{width:var(--do)}}
-.kfl.c-kop{background:#6AB04C} .kfl.c-os{background:#F0932B} .kfl.c-dost{background:#0984E3}
+.kfl.c-kop{background:#6AB04C} .kfl.c-osob{background:#F0932B} .kfl.c-ciez{background:#0984E3}
+.kfl.c-hds{background:#9B59B6} .kfl.c-przycz{background:#FD79A8} .kfl.c-bud{background:#7ED6DF}
+.kfl.c-quad,.kfl.c-inne{background:#636E72}
 .kfl.c-none{background:var(--szary); opacity:.45}
 .mon{display:flex; align-items:center; justify-content:space-between; margin:2px 0 8px}
 .mon .mn{font-weight:700; font-size:14.5px}
@@ -395,7 +408,6 @@ nav .wskaznik.bez-zakladki{opacity:0}
   .kfl{animation:none; width:var(--do)}
   .przycisk-glow, .przycisk-glow::after,
   nav button.zg .plus-glow, nav button.zg .plus-glow::after,
-  [data-paleta="zorza"] .row .ic,[data-paleta="rgb"] .row .ic,
   [data-paleta="zorza"] header,[data-paleta="rgb"] header,
   [data-paleta="zorza"] header::after,[data-paleta="rgb"] header::after,
   [data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,
@@ -477,7 +489,9 @@ function svg_(sciezki, styl){
          sciezki+'</svg>';
 }
 var I = {
-  /* ic-gauge */   puls:  svg_('<path d="M4.5 15.5a8 8 0 1 1 15 0"/><path d="M12 13.5 15.5 9"/><circle cx="12" cy="14.5" r="1.2"/><path d="M4.5 19h15"/>'),
+  /* PULS — nowa (rodzina ma tylko ic-gauge, czyli licznik). Linia EKG
+     w tej samej kresce co reszta zestawu (1.75, zaokrąglone końce). */
+                   puls:  svg_('<path d="M3.2 12h3.3l2-5.6 3.4 11.2 2.4-7 1.6 3.4h4.9"/>'),
   /* nowa, styl rodziny */ lupa: svg_('<circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4 4"/>'),
   /* ic-plus */    plus:  svg_('<path d="M12 5v14M5 12h14"/>'),
   /* ic-clip */    sprawy:svg_('<path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/>'),
@@ -490,12 +504,39 @@ var I = {
   /* ic-clock */   zegar: svg_('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
   /* ic-user */    osoba: svg_('<circle cx="12" cy="8.5" r="3.7"/><path d="M5 20a7.3 7.3 0 0 1 14 0"/>'),
   /* ic-money */   kasa:  svg_('<rect x="3" y="7" width="18" height="11" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 10.2v0M18 15v0"/>'),
+  /* HDS / dźwig — nowa, styl rodziny: podwozie jak w ic-digger + wysięgnik z hakiem */
+                   hds:   svg_('<path d="M3 18h10"/><circle cx="5.5" cy="18" r="1.6"/><circle cx="10.5" cy="18" r="1.6"/><path d="M4 15h8v-3.5H6L4 15Z"/><path d="M12 11.5V6h8"/><path d="M20 6v3.2"/><path d="M18.2 9.2h3.6"/>'),
+  /* przyczepa — nowa, styl rodziny: skrzynia, dyszel z zaczepem, oś */
+                   przycz:svg_('<rect x="3.5" y="7.5" width="12" height="7" rx="1.2"/><path d="M15.5 11h4.1l1.2 1.3"/><circle cx="7.5" cy="17.4" r="1.7"/><circle cx="11.5" cy="17.4" r="1.7"/><path d="M5.6 14.5v1.3M13.4 14.5v1.3"/>'),
+  /* quad / Maverick — nowa, styl rodziny: dwa duże koła, nadwozie, kierownica */
+                   quad:  svg_('<circle cx="6" cy="16.4" r="2.6"/><circle cx="18" cy="16.4" r="2.6"/><path d="M6 13.8h3.4l1.9-3.4h4.3l1.5 3.4h.9"/><path d="M11.3 10.4 10 7.6h4"/>'),
                    back:  svg_('<path d="M15 18l-6-6 6-6"/>', 'width:13px;height:13px'),
   /* nowa, styl rodziny — pełna zębatka (sam okrąg z kreskami czytał się
      jak słońce, czyli jak ic-sun z rodziny) */
   gear: svg_('<circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/>')
 };
-function ikonaRodzaju(kod){ return kod==='kop'?I.kop : kod==='os'||kod==='dost'?I.auto : I.inne; }
+/* ---------- RODZAJ POJAZDU: kod, kolor i ikona ----------
+   Kolory i KOLEJNOŚĆ dopasowania przepisane 1:1 z rodzajColor() w Panelu
+   Floty (paleta v93) — ta sama, którą Marek widzi w formatowaniu warunkowym
+   Spisu i na naklejkach QR. Pierwsza pasująca reguła wygrywa, jak w Excelu. */
+function kodRodzaju(rodzaj){
+  var r = String(rodzaj || '').trim().toLowerCase();
+  if (r === 'sprzęt budowlany') return 'bud';
+  if (r.indexOf('przyczepa') !== -1 || r.indexOf('naczepa') !== -1) return 'przycz';
+  if (r.indexOf('kopark') !== -1 || r.indexOf('ładowarka') !== -1) return 'kop';
+  if (r.indexOf('hds') !== -1 || r.indexOf('dźwig') !== -1) return 'hds';
+  if (r.indexOf('sam. ciężarowy') !== -1 || r.indexOf('ciężarow') !== -1 ||
+      r.indexOf('dostaw') !== -1) return 'ciez';
+  if (r.indexOf('sam. osobowy') !== -1 || r.indexOf('osobow') !== -1) return 'osob';
+  /* Quad / Maverick / ciągnik — w Spisie nie mają reguły, więc w Panelu biorą
+     szary fallback (#636E72). Ikonę dorysowaliśmy (prośba Marka 28.08). */
+  if (r.indexOf('quad') !== -1 || r.indexOf('ciągnik') !== -1) return 'quad';
+  return 'inne';
+}
+function ikonaRodzaju(kod){
+  return kod==='kop' ? I.kop : kod==='hds' ? I.hds : kod==='przycz' ? I.przycz
+       : kod==='quad' ? I.quad : (kod==='osob'||kod==='ciez') ? I.auto : I.inne;
+}
 
 /* ---------- KOLEJNOŚĆ LIST — jak w rodzinie (rangaTypu_ z Floty/Ewidencji):
    auta osobowe → dostawcze/ciężarowe → koparki/ładowarki → HDS → przyczepy.
@@ -539,7 +580,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           motyw:'asystent_motyw', paleta:'asystent_paleta' };
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v3';
+var WERSJA_SHELL = 'asystent-v4';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -727,7 +768,7 @@ function rysujPuls(){
     uwaga.slice(0,6).forEach(function(p){
       var s = p[0], m = maszynaSprawy(s);
       h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
-        '<div class="ic k-'+(m?m.rodzaj_kod:'inne')+'">'+ikonaRodzaju(m?m.rodzaj_kod:'inne')+'</div>'+
+        '<div class="ic k-'+(m?kodRodzaju(m.rodzaj):'inne')+'">'+ikonaRodzaju(m?kodRodzaju(m.rodzaj):'inne')+'</div>'+
         '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
         '<div class="t2">'+esc(s.maszyna||'')+' · '+esc(s.status)+'</div></div>'+p[1]+'</div>';
     });
@@ -755,12 +796,17 @@ function rysujSzukaj(){
   if (!dane) return;
   var h = '<div class="szukajka">'+I.lupa+
     '<input id="szukInput" placeholder="Szukaj maszyny… (np. JCB, WP 6865P)" value="'+esc(filtrTekst)+'"></div>';
-  var katy = [['wszystkie','Wszystkie'],['kop','Koparki'],['os','Osobowe'],['dost','Dostawcze'],['inne','Inne']];
+  /* chipy = kategorie z palety v93; pokazujemy tylko te, które realnie są */
+  var katy = [['wszystkie','Wszystkie'],['osob','Osobowe'],['ciez','Ciężarowe'],
+              ['kop','Koparki'],['hds','HDS'],['przycz','Przyczepy'],
+              ['bud','Sprzęt'],['quad','Quady'],['inne','Inne']];
+  var obecne = {}; (dane.maszyny||[]).forEach(function(m){ obecne[kodRodzaju(m.rodzaj)] = true; });
+  katy = katy.filter(function(k){ return k[0]==='wszystkie' || obecne[k[0]]; });
   h += '<div class="chips">'+katy.map(function(k){
     return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
   }).join('')+'</div>';
   var lista = sortujMaszyny((dane.maszyny||[]).filter(function(m){
-    if (filtrKat!=='wszystkie' && m.rodzaj_kod!==filtrKat) return false;
+    if (filtrKat!=='wszystkie' && kodRodzaju(m.rodzaj)!==filtrKat) return false;
     if (!filtrTekst) return true;
     var t = filtrTekst.toLowerCase();
     return (m.nazwa||'').toLowerCase().indexOf(t)>=0 ||
@@ -779,7 +825,7 @@ function rysujSzukaj(){
     }
     var model = modelMaszyny(m);
     h += '<div class="mrow" onclick="otworzMaszyne(\''+m.id+'\')">'+
-      '<span class="ik ic k-'+m.rodzaj_kod+'">'+ikonaRodzaju(m.rodzaj_kod)+'</span>'+
+      '<span class="ik ic k-'+kodRodzaju(m.rodzaj)+'">'+ikonaRodzaju(kodRodzaju(m.rodzaj))+'</span>'+
       '<span class="nm"><b>'+esc(kluczMaszyny(m))+'</b>'+
         (model ? '<span class="model">'+esc(model)+'</span>' : '')+'</span>'+
       '<span class="chev">›</span></div>';
@@ -823,7 +869,7 @@ function rysujKartaMaszyny(){
   if (!spr.length) h += '<div class="pusto">Brak spraw — i dobrze.</div>';
   spr.forEach(function(s){
     h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
-      '<div class="ic k-'+m.rodzaj_kod+'">'+I.wr+'</div>'+
+      '<div class="ic k-'+kodRodzaju(m.rodzaj)+'">'+I.wr+'</div>'+
       '<div class="mid"><div class="t1">'+esc(s.tytul||'')+'</div>'+
       '<div class="t2">'+esc(s.id)+' · '+esc(czasPL(s.utworzono))+'</div></div>'+pillStatus(s.status)+'</div>';
   });
@@ -879,7 +925,7 @@ function rysujSprawy(){
     var extra = (d!==null && d<0 && czyWToku(s.status)) ? '<span class="pill red">po terminie</span>'
               : (d===0 && czyWToku(s.status)) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status);
     h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
-      '<div class="ic k-'+(m?m.rodzaj_kod:'inne')+'">'+ikonaRodzaju(m?m.rodzaj_kod:'inne')+'</div>'+
+      '<div class="ic k-'+(m?kodRodzaju(m.rodzaj):'inne')+'">'+ikonaRodzaju(m?kodRodzaju(m.rodzaj):'inne')+'</div>'+
       '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
       '<div class="t2">'+esc(s.id)+' · '+esc(s.maszyna||'')+'</div></div>'+extra+'</div>';
   });
@@ -963,7 +1009,7 @@ function rysujKoszty(){
     klucze.forEach(function(k, i){
       var maszyna = kosztyKv==='masz' ? (dane.maszyny||[]).find(function(m){
         return m.rejestracja===k || m.nazwa===k; }) : null;
-      var kl = maszyna ? 'c-'+maszyna.rodzaj_kod : (kosztyKv==='masz' ? 'c-none' : '');
+      var kl = maszyna ? 'c-'+kodRodzaju(maszyna.rodzaj) : (kosztyKv==='masz' ? 'c-none' : '');
       h += '<div class="krow"><div class="kl"><span>'+esc(k)+'</span><b>'+zl(grupy[k])+'</b></div>'+
         '<div class="ktr"><div class="kfl '+kl+'" style="--do:'+
         Math.max(4, Math.round(grupy[k]/maxy*100))+'%; --zwloka:'+(i*70)+'ms"></div></div></div>';
