@@ -742,7 +742,8 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pole .ik.pusta{background:var(--wcisk)} .pole .ik.pusta svg{stroke:var(--szary)}
 .pole .txt{min-width:0; flex:1}
 .pole .txt .a{font-weight:600; line-height:1.25}
-.pole .txt .b{font-size:11.5px; color:var(--szary)}
+/* Z-9: odstęp między rejestracją a marką/modelem (Marek: "za blisko") */
+.pole .txt .b{font-size:11.5px; color:var(--szary); margin-top:3px; display:block}
 .pole .txt .b.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px}
 .pole .strz{color:var(--szary); flex:none; font-size:13px}
 .pole.pusty .a{color:var(--szary); font-weight:500}
@@ -1269,7 +1270,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v14';
+var WERSJA_SHELL = 'asystent-v15';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1447,10 +1448,23 @@ function pokaz(k){
   window.scrollTo(0, 0);
 }
 
+/* Z-9: wpis ze Skrzynki, który jest już w głównym pliku, przestaje "czekać".
+   Skąd to wiemy BEZ odznaczania czegokolwiek w Skrzynce (Zasada #1 — stan
+   z danych): import do Zgłoszenia Floty.xlsx zapisuje S-ID w kolumnie R
+   "Źródło (S-ID)", eksport lustra niesie go jako `zrodlo` sprawy, a tu
+   wystarczy porównać. Zgłoszenie Marka 30.08: "odświeżanie nie odświeżyło
+   stanu zgłoszeń co czekają". Dopiski zostają — ich import to osobny tor. */
+function skrzynkaCzekajaca_(){
+  var zrodla = {};
+  (dane && dane.sprawy || []).forEach(function(s){ if (s.zrodlo) zrodla[s.zrodlo] = true; });
+  return (dane && dane.skrzynka || []).filter(function(w){
+    return !(w.rodzaj !== 'dopisek' && zrodla[w.s_id]);
+  });
+}
 /* ---------- PULS ---------- */
 function rysujPuls(){
   if (!dane) return;
-  var sp = dane.sprawy || [], skrz = dane.skrzynka || [];
+  var sp = dane.sprawy || [], skrz = skrzynkaCzekajaca_();
   var wToku = sp.filter(function(s){ return czyWToku(s.status); });
   var poTerminie = wToku.filter(function(s){ var d = dniDo(s.termin); return d !== null && d < 0; });
   var terminDzis = wToku.filter(function(s){ return dniDo(s.termin) === 0; });
@@ -1627,7 +1641,7 @@ function rysujKartaMaszyny(){
 var filtrSpraw = 'toku';
 function rysujSprawy(){
   if (!dane) return;
-  var sp = dane.sprawy || [], skrz = dane.skrzynka || [];
+  var sp = dane.sprawy || [], skrz = skrzynkaCzekajaca_();   /* Z-9 */
   var h = '<div class="chips" style="margin-top:10px">'+
     '<button class="chip'+(filtrSpraw==='toku'?' on':'')+'" onclick="ustawFiltrSpraw(\'toku\')">W toku</button>'+
     '<button class="chip'+(filtrSpraw==='wszystkie'?' on':'')+'" onclick="ustawFiltrSpraw(\'wszystkie\')">Wszystkie</button></div>';
@@ -1768,7 +1782,10 @@ function wybierzMiesiac(i){ kosztyIdx = i; kosztyKv = 'kat'; rysujKoszty(); }
    Przy okazji znika błąd: ustawTyp() wołało rysujZglos(), które przerysowywało
    cały ekran i kasowało wpisaną treść oraz wybraną maszynę (potwierdzone
    pomiarem: treść 60 znaków -> 0, maszyna P014 -> P046). */
-var wybranaMaszyna = '';   /* id maszyny albo '' = nie wiem */
+/* Z-9: '' = jeszcze nie wybrano (pole zachęca), '~brak' = ŚWIADOMY wybór
+   "Nie wiem / inna" (pole go pokazuje — wcześniej wyglądało jak brak wyboru
+   i kusiło, żeby wybierać jeszcze raz; zgłoszenie Marka 30.08). */
+var wybranaMaszyna = '';
 var zgloszenieDraft = '';  /* treść przeżywa przerysowanie ekranu (np. po cichym pobraniu danych) */
 var wybOtwarty = false, wybSzukaj = '', wybKat = '';
 
@@ -1779,7 +1796,7 @@ function rysujZglos(){
     '<div class="komunikat" id="zglosKomunikat"></div>'+
     '<label>Maszyna</label>'+ poleMaszynyHTML_(m) +
     '<label for="zgTresc">Co się dzieje?</label>'+
-    '<textarea id="zgTresc" rows="5" placeholder="np. pękł wąż hydrauliczny, Janek załatwił u Hydromexu, 800 zł gotówką"></textarea>'+
+    '<textarea id="zgTresc" rows="5" placeholder="opisz swoimi słowami: co się stało, kto się tym zajmuje, koszt jeśli znany"></textarea>'+
     '<div class="przycisk-glow" style="margin-top:16px"><button class="przycisk" onclick="wyslijZgloszenie()">Wyślij zgłoszenie</button></div>'+
     '<div class="fnote">wpis trafia do skrzynki i dostaje status „Nowe" —<br>'+
     'statusu ani typu nie ustawiasz, wynikają z treści</div></div>';
@@ -1797,6 +1814,13 @@ function maszynaPoId_(id){
   return null;
 }
 function poleMaszynyHTML_(m){
+  if (!m && wybranaMaszyna === '~brak'){
+    return '<button type="button" class="pole" id="zgMaszynaPole" aria-haspopup="dialog">'+
+      '<span class="ik ic k-brak">'+ikonaRodzaju('inne')+'</span>'+
+      '<span class="txt"><span class="a">Nie wiem / inna</span>'+
+      '<span class="b">opiszę maszynę w treści</span></span>'+
+      '<span class="strz">▾</span></button>';
+  }
   if (!m){
     return '<button type="button" class="pole pusty" id="zgMaszynaPole" '+
       'aria-haspopup="dialog"><span class="ik pusta">'+
@@ -1832,7 +1856,7 @@ window.addEventListener('popstate', function(){
   if (wybOtwarty) zamknijWybierak(true);
 });
 function wybierzMaszyne(id){
-  wybranaMaszyna = id;
+  wybranaMaszyna = id || '~brak';   /* Z-9: pusty id z listy = świadome "Nie wiem / inna" */
   zamknijWybierak();
   rysujZglos();
 }
