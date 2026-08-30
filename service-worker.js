@@ -2,7 +2,7 @@
    Konwencja nazwy cache: asystent-vNN — NUMER podbijać przy KAŻDEJ zmianie
    plików aplikacji (inaczej przeglądarki podadzą stare pliki z cache).
    Stopka w aplikacji pokazuje 'asystent-vNN' — patrz obsługa message. */
-var WERSJA_CACHE = 'asystent-v16';  /* v16 (30.08.2026): Z-9b — pole wybieraka: lupa zamiast ikony-słonca, pytajnik przy "Nie wiem / inna" (+ całe Z-9 z v15) */
+var WERSJA_CACHE = 'asystent-v17';  /* v17 (30.08.2026): Z-10 — kafelki spraw wariant C: klucz maszyny jak w wybieraku (rejestracja/nazwa + podpis/VIN), opis max 2 linie, numer i termin na dole */
 var SHELL = [
   './', './index.html', './config.js', './manifest.json',
   './ikona-192.png', './ikona-512.png',

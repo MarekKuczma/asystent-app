@@ -828,6 +828,19 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pill.acc{background:var(--wcisk); color:var(--akcent)}
 .pill.szara{background:var(--wcisk); color:var(--szary)}
 .pusto{text-align:center; color:var(--szary); padding:18px 8px; font-size:12.5px}
+/* Z-10: kafelek sprawy (wariant C z makiety + nazewnictwo jak w wybieraku:
+   klucz = rejestracja/nazwa pogrubione, podpis = marka-model/VIN) */
+.row .g1{display:flex; align-items:center; gap:8px; min-width:0}
+.row .s-klucz{font-weight:700; font-size:13.5px; line-height:1.3; flex:1; min-width:0;
+   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row .s-podpis{font-size:11px; color:var(--szary); margin-top:1px; line-height:1.3}
+.row .s-podpis.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px}
+.row .s-opis{font-size:12.5px; line-height:1.4; margin-top:3px;
+   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.row .g3{display:flex; align-items:center; gap:8px; margin-top:4px}
+.row .s-nr{font-size:10.5px; color:var(--szary); font-variant-numeric:tabular-nums}
+.row .s-ter{font-size:10.5px; font-weight:700; color:var(--uwaga)}
+.row .s-ter.red{color:var(--blad)}
 
 /* szukajka */
 .szukajka{display:flex; gap:8px; align-items:center; background:var(--karta); border-radius:14px;
@@ -1285,7 +1298,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v16';
+var WERSJA_SHELL = 'asystent-v17';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1653,6 +1666,42 @@ function rysujKartaMaszyny(){
 }
 
 /* ---------- SPRAWY + KARTA SPRAWY ---------- */
+/* Z-10 (decyzja Marka z makiety, wariant C): kafelek sprawy prowadzi
+   MASZYNĄ w konwencji wybieraka — klucz pogrubiony (rejestracja, a u koparek
+   nazwa np. „Hidromek (1)"), pod spodem podpis (marka i model, u koparek VIN).
+   Opis zwykłą czcionką, max 2 linie (pełny jest w karcie sprawy). Na dole
+   numer sprawy i TERMIN, gdy jest. Plakietka: po terminie / termin dziś
+   wygrywa ze statusem (jak dotąd). */
+function dataKrotka_(iso){
+  if (!iso) return '';
+  var s = String(iso);
+  return s.slice(8, 10) + '.' + s.slice(5, 7);
+}
+function kafelSprawy_(s){
+  var m = maszynaSprawy(s), d = dniDo(s.termin), wToku = czyWToku(s.status);
+  var pill = (d !== null && d < 0 && wToku) ? '<span class="pill red">po terminie</span>'
+           : (d === 0 && wToku) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status);
+  var klucz, podpis = '', vin = false;
+  if (m){
+    klucz = kluczMaszyny(m);
+    podpis = podpisMaszyny(m);
+    vin = czyKoparka_(m) && !!m.vin;
+  } else {
+    klucz = s.maszyna || 'maszyna nieznana';   /* tekst z arkusza, bez dopasowania */
+  }
+  var ter = '';
+  if (s.termin && wToku){
+    ter = '<span class="s-ter' + ((d !== null && d < 0) ? ' red' : '') + '">termin: ' +
+          dataKrotka_(s.termin) + '</span>';
+  }
+  return '<div class="row" onclick="otworzSprawe(\'' + s.id + '\')">' +
+    '<div class="ic k-' + (m ? kodRodzaju(m.rodzaj) : 'inne') + '">' +
+    ikonaRodzaju(m ? kodRodzaju(m.rodzaj) : 'inne') + '</div>' +
+    '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(klucz) + '</span>' + pill + '</div>' +
+    (podpis ? '<div class="s-podpis' + (vin ? ' vin' : '') + '">' + esc(podpis) + '</div>' : '') +
+    '<div class="s-opis">' + esc(s.tytul || '') + '</div>' +
+    '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + ter + '</div></div></div>';
+}
 var filtrSpraw = 'toku';
 function rysujSprawy(){
   if (!dane) return;
@@ -1682,15 +1731,7 @@ function rysujSprawy(){
   });
   h += '<div class="h">'+(filtrSpraw==='toku'?'W toku':'Wszystkie')+' · '+lista.length+'</div><div class="karta">';
   if (!lista.length) h += '<div class="pusto">Pusto.</div>';
-  lista.forEach(function(s){
-    var m = maszynaSprawy(s), d = dniDo(s.termin);
-    var extra = (d!==null && d<0 && czyWToku(s.status)) ? '<span class="pill red">po terminie</span>'
-              : (d===0 && czyWToku(s.status)) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status);
-    h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
-      '<div class="ic k-'+(m?kodRodzaju(m.rodzaj):'inne')+'">'+ikonaRodzaju(m?kodRodzaju(m.rodzaj):'inne')+'</div>'+
-      '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
-      '<div class="t2">'+esc(s.id)+' · '+esc(s.maszyna||'')+'</div></div>'+extra+'</div>';
-  });
+  lista.forEach(function(s){ h += kafelSprawy_(s); });
   h += '</div>';
   el('ekranSprawy').innerHTML = h;
 }
