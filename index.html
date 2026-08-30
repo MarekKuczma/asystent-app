@@ -84,7 +84,9 @@ body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
    /* stożek 1:1 z rodziny — 12 przystanków przez zieleń, fiolet i pastele */
    --stozek:#4ade80,#22c55e,#16a34a,#14532d,#3b0764,#7e22ce,#9333ea,#c084fc,#e9d5ff,#bbf7d0,#86efac,#4ade80;
    --glow-krycie:.42;
-   --grad-maly:linear-gradient(135deg,#22c55e,#9333ea)}
+   /* v13: IDENTYCZNY z gradientem Jadeitu (decyzja Marka 30.08 — Gamma to
+      animowana siostra Jadeitu, małe elementy mają wyglądać tak samo) */
+   --grad-maly:linear-gradient(135deg,#22c55e,#7e22ce)}
 [data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
    --grad:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
    --ikona-grad:var(--grad); --on-akcent:#fff;
@@ -825,7 +827,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v12';
+var WERSJA_SHELL = 'asystent-v13';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
