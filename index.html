@@ -60,24 +60,30 @@ body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
    Asystenta (--grad/--stozek/...). Gradienty 90deg 6-stop = pętla bez szwu. --- */
 [data-paleta="aurora"]{--akcent:#1d63d8; --akcent-moc:#4D96FF;
    --grad:linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2,#4D96FF,#24314A);
-   --ikona-grad:linear-gradient(135deg,#1A1F36,#4D96FF 55%,#8A2BE2); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#4D96FF,#79DFFF,#8A2BE2,#79DFFF,#4D96FF);
-   --stozek:#79DFFF,#4D96FF,#8A2BE2,#4D96FF,#79DFFF; --glow-krycie:.62}
+   --ikona-grad:var(--grad); --on-akcent:#fff;
+   --wskaznik-grad:var(--grad);
+   /* stożek 1:1 z rodziny (Flota ~l.976) — 11 przystanków, nie skracać */
+   --stozek:#79DFFF,#4D96FF,#3B6FE0,#24314A,#4C1D95,#8A2BE2,#A855F7,#C4A2FF,#DBEAFE,#A5E9FF,#79DFFF;
+   --glow-krycie:.42}
 [data-paleta="rgb"]{--akcent:#22d3ee; --akcent-moc:#a855f7;
    --grad:linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95);
-   --ikona-grad:linear-gradient(135deg,#ff2d95,#a855f7,#22d3ee,#22c55e); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#facc15,#ff2d95);
-   --stozek:#ff2d95,#a855f7,#22d3ee,#facc15,#ff2d95; --glow-krycie:.70}
+   --ikona-grad:var(--grad); --on-akcent:#fff;
+   --wskaznik-grad:var(--grad);
+   --stozek:#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95; --glow-krycie:.55}
 [data-paleta="gamma"]{--akcent:#7e22ce; --akcent-moc:#9333ea;
    --grad:linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d);
-   --ikona-grad:linear-gradient(135deg,#052e16,#22c55e 55%,#9333ea); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#4ade80,#9333ea,#4ade80);
-   --stozek:#86efac,#22c55e,#9333ea,#22c55e,#86efac; --glow-krycie:.50}
+   --ikona-grad:var(--grad); --on-akcent:#fff;
+   --wskaznik-grad:var(--grad);
+   /* stożek 1:1 z rodziny — 12 przystanków przez zieleń, fiolet i pastele */
+   --stozek:#4ade80,#22c55e,#16a34a,#14532d,#3b0764,#7e22ce,#9333ea,#c084fc,#e9d5ff,#bbf7d0,#86efac,#4ade80;
+   --glow-krycie:.42}
 [data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
    --grad:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
-   --ikona-grad:linear-gradient(135deg,#7f1d1d,#1e3a8a); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444);
-   --stozek:#93c5fd,#2563eb,#dc2626,#2563eb,#93c5fd; --glow-krycie:.50}
+   --ikona-grad:var(--grad); --on-akcent:#fff;
+   --wskaznik-grad:var(--grad);
+   /* stożek 1:1 z rodziny — 11 przystanków przez czerwień, granat i pastele */
+   --stozek:#f87171,#dc2626,#b91c1c,#7f1d1d,#1e3a8a,#2563eb,#3b82f6,#93c5fd,#dbeafe,#fecaca,#f87171;
+   --glow-krycie:.42}
 
 /* ---- OBRACAJĄCA SIĘ OBWÓDKA PRZYCISKÓW (Z-81, przepisane z Floty) ----
    @property pozwala przeglądarce interpolować kąt; bez rejestracji obwódka
@@ -106,21 +112,27 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
 .stat, .term{position:relative}
 
 /* ---- PALETY SPECJALNE: animowane tła i poświaty (wzorzec aurora/rgb) ---- */
+/* v11: DOKŁADNIE jak w rodzinie (Flota ~l.294-306, 886-889, 1026-1030):
+   gradient płynie w JEDNĄ stronę, liniowo, `plyn` (klatki 1:1 z rodziny),
+   czasy per paleta: gamma/heros 11s, rgb 9s, aurora 14s.
+   Wcześniej: 7s ease-in-out tam-i-z-powrotem (osobne klatki, usunięte) — to była
+   najbardziej widoczna różnica na guzikach (zgłoszenie Marka 30.08). */
 [data-paleta="aurora"] .przycisk,[data-paleta="aurora"] .hero,
 [data-paleta="gamma"] .przycisk,[data-paleta="gamma"] .hero,
 [data-paleta="heros"] .przycisk,[data-paleta="heros"] .hero,
 [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{
-   background-size:250% 100%; animation:plynPalety 7s ease-in-out infinite}
-[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{animation-duration:4.5s}
-@keyframes plynPalety{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+   background-size:300% 100%; animation:plyn 11s linear infinite}
+[data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{animation-duration:9s}
+[data-paleta="aurora"] .przycisk,[data-paleta="aurora"] .hero{animation-duration:14s}
 /* nagłówek: przebiegający połysk (przebiegPolysk z Floty) */
 @keyframes przebiegPolysk{0%{transform:translateX(-130%)}45%,100%{transform:translateX(130%)}}
 [data-paleta="aurora"] header,[data-paleta="gamma"] header,
 [data-paleta="heros"] header,[data-paleta="rgb"] header{position:relative; overflow:hidden;
-   background-size:250% 100%; animation:plynPalety 7s ease-in-out infinite}
-[data-paleta="rgb"] header{animation-duration:4.5s}
-[data-paleta="aurora"] header::after,[data-paleta="gamma"] header::after,
-[data-paleta="heros"] header::after,[data-paleta="rgb"] header::after{content:'';
+   background-size:300% 100%; animation:plyn 11s linear infinite}
+[data-paleta="rgb"] header{animation-duration:9s}
+[data-paleta="aurora"] header{animation-duration:14s}
+/* połysk przebiegający po nagłówku: w rodzinie ma go TYLKO Full RGB */
+[data-paleta="rgb"] header::after{content:'';
    position:absolute; inset:0; pointer-events:none;
    background:linear-gradient(105deg, transparent 36%, rgba(255,255,255,.38) 50%, transparent 64%);
    transform:translateX(-130%); animation:przebiegPolysk 5.5s ease-in-out infinite}
@@ -166,17 +178,28 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
    Jadeitu. Dlatego każda paleta MUSI mieć własny blok 2-atrybutowy poniżej —
    także rgb, którego akcent w ciemnym się nie zmienia.
    Palety specjalne przebarwiają też tła (wartości z kanonu). */
-[data-motyw="ciemny"][data-paleta="hot-iron"]{--akcent:#f87171; --akcent-moc:#fca5a5}
-[data-motyw="ciemny"][data-paleta="widmo"]{--akcent:#a78bfa; --akcent-moc:#c4b5fd}
-[data-motyw="ciemny"][data-paleta="fiord"]{--akcent:#67e8f9; --akcent-moc:#a5f3fc}
+/* wzorzec rodziny: w ciemnym motywie stożek obwódki się ROZJAŚNIA (środek
+   z najciemniejszego robi się najjaśniejszy), a palety specjalne podbijają
+   poświatę do .85 (Z-81) */
+[data-motyw="ciemny"]{--stozek:#22c55e,#4ade80,#bbf7d0,#4ade80,#22c55e}  /* Jadeit */
+[data-motyw="ciemny"][data-paleta="hot-iron"]{--akcent:#f87171; --akcent-moc:#fca5a5;
+      --stozek:#dc2626,#f59e0b,#fde68a,#f59e0b,#dc2626}
+[data-motyw="ciemny"][data-paleta="widmo"]{--akcent:#a78bfa; --akcent-moc:#c4b5fd;
+      --stozek:#7c3aed,#a78bfa,#ddd6fe,#a78bfa,#7c3aed}
+[data-motyw="ciemny"][data-paleta="fiord"]{--akcent:#67e8f9; --akcent-moc:#a5f3fc;
+      --stozek:#0e7490,#38bdf8,#a5f3fc,#38bdf8,#0e7490}
 [data-motyw="ciemny"][data-paleta="aurora"]{--akcent:#79DFFF; --akcent-moc:#a5ecff;
-      --tlo:#12172b; --karta:#1A1F36; --linia:#2a3152; --wcisk:#232947}
+      --tlo:#12172b; --karta:#1A1F36; --linia:#2a3152; --wcisk:#232947;
+      --glow-krycie:.85}
 [data-motyw="ciemny"][data-paleta="rgb"]{--akcent:#22d3ee; --akcent-moc:#a855f7;
-      --tlo:#0a0b10; --karta:#141824; --linia:#232939; --wcisk:#1b202e}
+      --tlo:#0a0b10; --karta:#141824; --linia:#232939; --wcisk:#1b202e;
+      --glow-krycie:.85}
 [data-motyw="ciemny"][data-paleta="gamma"]{--akcent:#c084fc; --akcent-moc:#d8b4fe;
-      --tlo:#0d1f14; --karta:#16281c; --linia:#22382a; --wcisk:#1c3023}
+      --tlo:#0d1f14; --karta:#16281c; --linia:#22382a; --wcisk:#1c3023;
+      --glow-krycie:.85}
 [data-motyw="ciemny"][data-paleta="heros"]{--akcent:#93c5fd; --akcent-moc:#bfdbfe;
-      --tlo:#101223; --karta:#1b1d2e; --linia:#282b42; --wcisk:#222438}
+      --tlo:#101223; --karta:#1b1d2e; --linia:#282b42; --wcisk:#222438;
+      --glow-krycie:.85}
 
 #app{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column;
      background:var(--tlo); position:relative}
@@ -506,8 +529,8 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pal-poz .probka{display:block; width:100%; height:38px; border-radius:9px;
    margin-bottom:7px}
 /* Próbki palet specjalnych ruszają się już NA LIŚCIE — widać, że są inne,
-   zanim się je wybierze (wzorzec rodziny). Osobne keyframes: `plyn` i
-   `plynPalety` już istnieją i robią co innego — patrz lekcja z `obrot`. */
+   zanim się je wybierze (wzorzec rodziny). Osobna nazwa klatek —
+   `plyn` już istnieje i robi co innego; patrz lekcja z `obrot`. */
 .pal-poz.spec .probka{background-size:250% 100%; animation:probkaPlyn 5s linear infinite}
 @keyframes probkaPlyn{to{background-position:-250% 0}}
 .pal-poz .tekst{display:block}
@@ -585,8 +608,7 @@ nav .wskaznik.bez-zakladki{opacity:0}
   nav button.zg .plus-glow, nav button.zg .plus-glow::after,
   [data-paleta="aurora"] header,[data-paleta="gamma"] header,
   [data-paleta="heros"] header,[data-paleta="rgb"] header,
-  [data-paleta="aurora"] header::after,[data-paleta="gamma"] header::after,
-  [data-paleta="heros"] header::after,[data-paleta="rgb"] header::after,
+  [data-paleta="rgb"] header::after,
   [data-paleta="aurora"] .przycisk,[data-paleta="aurora"] .hero,
   [data-paleta="gamma"] .przycisk,[data-paleta="gamma"] .hero,
   [data-paleta="heros"] .przycisk,[data-paleta="heros"] .hero,
@@ -794,7 +816,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v10';
+var WERSJA_SHELL = 'asystent-v11';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
