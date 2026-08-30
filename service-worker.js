@@ -2,7 +2,7 @@
    Konwencja nazwy cache: asystent-vNN — NUMER podbijać przy KAŻDEJ zmianie
    plików aplikacji (inaczej przeglądarki podadzą stare pliki z cache).
    Stopka w aplikacji pokazuje 'asystent-vNN' — patrz obsługa message. */
-var WERSJA_CACHE = 'asystent-v18';  /* v18 (30.08.2026): Z-10b — „Dziś wymaga uwagi" na Pulsie dostaje ten sam kafelek co lista spraw (plakietka niesie powód, status na dole) */
+var WERSJA_CACHE = 'asystent-v19';  /* v19 (30.08.2026): Z-11 — trzy filtry spraw (W robocie / Do rozliczenia / Wszystkie) + STRAZNIK A-04: komplet regul przypomnien z cyklu zycia (nowe, wycena, umowione bez terminu, wisi w realizacji, wykonane bez faktury) */
 var SHELL = [
   './', './index.html', './config.js', './manifest.json',
   './ikona-192.png', './ikona-512.png',

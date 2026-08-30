@@ -1298,7 +1298,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v18';
+var WERSJA_SHELL = 'asystent-v19';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1332,7 +1332,31 @@ function pillStatus(s){
             'Wykonane':'green','Rozliczone':'szara','Anulowane':'szara'}[s] || 'szara';
   return '<span class="pill '+kl+'">'+esc(s)+'</span>';
 }
+/* ZAMKNIĘTE = nic już nie trzeba zrobić. „Wykonane" NIE jest zamknięte:
+   wg cyklu życia z notatki projektu znaczy „zrobione, czekamy na fakturę". */
 function czyWToku(s){ return s!=='Rozliczone' && s!=='Anulowane'; }
+/* Z-11: „w robocie" = sprawa, przy której ktoś jeszcze coś robi.
+   „Do rozliczenia" = Wykonane bez wpisanej faktury. */
+function czyWRobocie(s){ return czyWToku(s) && s !== 'Wykonane'; }
+function czyDoRozliczenia(s){ return s.status === 'Wykonane'; }
+/* Z-11: dni ROBOCZE od podanej daty do dziś (dzień wpisu się nie liczy).
+   Weekend nie liczy się do progów — w sobotę serwis i tak nie odpisze. */
+function dniRobocze_(od){
+  var d = dataZ(od); if (!d) return null;
+  var b = dzis(), n = 0;
+  d = new Date(d.getTime()); d.setDate(d.getDate() + 1);
+  while (d <= b){
+    var dz = d.getDay();
+    if (dz !== 0 && dz !== 6) n++;
+    d.setDate(d.getDate() + 1);
+  }
+  return n;
+}
+/* Z-11: dni kalendarzowe od daty do dziś. */
+function dniOd_(od){ var d = dniDo(od); return d === null ? null : -d; }
+/* Progi przypomnień — jedno miejsce do strojenia (cykl życia z notatki
+   projektu). Nowe/Wycena w dniach ROBOCZYCH, reszta w kalendarzowych. */
+var PROGI = { nowe: 2, wycena: 3, realizacja: 7, faktura: 7 };
 
 /* ---------- API ---------- */
 function api(cialo){
@@ -1498,15 +1522,52 @@ function rysujPuls(){
   var terminDzis = wToku.filter(function(s){ return dniDo(s.termin) === 0; });
   var wSerwisie = wToku.filter(function(s){ return s.status === 'W realizacji'; });
 
+  /* ===== Z-11: STRAŻNIK (A-04) — komplet reguł z cyklu życia w notatce
+     projektu. Kolejność dopisywania = priorytet: pierwsza pasująca reguła
+     wygrywa (niżej odsiewa `widziane`). Progi w PROGI, liczone w aplikacji
+     — arkusz nietknięty (Zasada #1: status wynika z treści, nie z klikania). */
   var uwaga = [];
+  /* 1. termin minął — najważniejsze, bo ktoś czeka */
   poTerminie.forEach(function(s){ uwaga.push([s, '<span class="pill red">po terminie '+(-dniDo(s.termin))+' dn.</span>']); });
+  /* 2. termin dziś */
   terminDzis.forEach(function(s){ uwaga.push([s, '<span class="pill amber">termin DZIŚ</span>']); });
+  /* 3. Wykonane bez faktury — robota skończona, pieniądze nierozliczone */
+  sp.forEach(function(s){
+    if (s.status !== 'Wykonane' || s.nr_faktury) return;
+    var d = dniOd_(s.status_od);
+    if (d !== null && d > PROGI.faktura)
+      uwaga.push([s, '<span class="pill red">bez faktury '+d+' dn.</span>']);
+  });
+  /* 4. wisi w realizacji */
   wToku.forEach(function(s){
-    if (s.status==='Wycena'){ var od = -(dniDo(s.status_od)||0);
-      uwaga.push([s, '<span class="pill acc">wycena · '+(od+1)+'. dzień</span>']); }
+    if (s.status !== 'W realizacji') return;
+    var d = dniOd_(s.status_od);
+    if (d !== null && d > PROGI.realizacja)
+      uwaga.push([s, '<span class="pill amber">w serwisie '+d+' dn.</span>']);
+  });
+  /* 5. brak wyceny */
+  wToku.forEach(function(s){
+    if (s.status !== 'Wycena') return;
+    var d = dniRobocze_(s.status_od);
+    if (d !== null && d > PROGI.wycena)
+      uwaga.push([s, '<span class="pill acc">brak wyceny '+d+' dn. rob.</span>']);
+  });
+  /* 6. Umówione bez terminu — luka w danych: status mówi „termin ustalony",
+     a pola Termin nie ma, więc nic tej sprawy nie przypilnuje */
+  wToku.forEach(function(s){
+    if (s.status === 'Umówione' && !s.termin)
+      uwaga.push([s, '<span class="pill amber">brak terminu</span>']);
+  });
+  /* 7. Nowe leży bez ruchu */
+  wToku.forEach(function(s){
+    if (s.status !== 'Nowe') return;
+    var d = dniRobocze_(s.status_od || s.utworzono);
+    if (d !== null && d > PROGI.nowe)
+      uwaga.push([s, '<span class="pill acc">nowe od '+d+' dn. rob.</span>']);
   });
   var widziane = {};
   uwaga = uwaga.filter(function(p){ if(widziane[p[0].id]) return false; widziane[p[0].id]=true; return true; });
+  var doRozliczenia = sp.filter(czyDoRozliczenia);
 
   var h = '';
   /* pasek "dane z" */
@@ -1533,14 +1594,22 @@ function rysujPuls(){
   }
 
   h += '<div class="h">Dziś wymaga uwagi</div>';
-  if (!uwaga.length) h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div></div>';
-  else {
+  if (!uwaga.length) {
+    /* Z-11: pusto ZNACZY „żadna sprawa nie przekroczyła progu" — dopisujemy
+       ile ich w ogóle jest, żeby pustka nie wyglądała jak awaria. */
+    h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div>'+
+      (wToku.length ? '<div class="fnote">'+wToku.length+' '+
+        (wToku.length===1?'sprawa w toku, żadna':'w toku, żadna')+
+        ' nie przekroczyła progu przypomnienia</div>' : '')+'</div>';
+  } else {
     h += '<div class="karta">';
     /* Z-10b: ten sam kafelek co na liście spraw. Plakietka = POWÓD uwagi
        (p[1]), status ląduje na dole obok numeru. */
     uwaga.slice(0,6).forEach(function(p){
       h += kafelSprawy_(p[0], { pill: p[1], status: true });
     });
+    if (uwaga.length > 6)
+      h += '<div class="fnote">…i jeszcze '+(uwaga.length-6)+' — cała lista w zakładce Sprawy</div>';
     h += '</div>';
   }
 
@@ -1698,6 +1767,13 @@ function kafelSprawy_(s, opcje){
           dataKrotka_(s.termin) + '</span>';
   }
   var stat = opcje.status ? '<span class="s-nr">' + esc(s.status) + '</span>' : '';
+  /* Z-11: sprawa „Wykonane" nie ma już terminu do pilnowania — w jego miejsce
+     pokazujemy, ile dni czeka na fakturę (i od kiedy). */
+  if (!ter && s.status === 'Wykonane' && !s.nr_faktury){
+    var dF = dniOd_(s.status_od);
+    if (dF !== null) ter = '<span class="s-ter' + (dF > PROGI.faktura ? ' red' : '') +
+      '">czeka na fakturę: ' + dF + ' dn.</span>';
+  }
   return '<div class="row" onclick="otworzSprawe(\'' + s.id + '\')">' +
     '<div class="ic k-' + (m ? kodRodzaju(m.rodzaj) : 'inne') + '">' +
     ikonaRodzaju(m ? kodRodzaju(m.rodzaj) : 'inne') + '</div>' +
@@ -1706,12 +1782,19 @@ function kafelSprawy_(s, opcje){
     '<div class="s-opis">' + esc(s.tytul || '') + '</div>' +
     '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + stat + ter + '</div></div></div>';
 }
-var filtrSpraw = 'toku';
+/* Z-11: trzy filtry zamiast dwóch. „W toku" mieszało robotę z czekaniem
+   na fakturę — teraz stan widać z samego filtra. */
+var filtrSpraw = 'robocie';
 function rysujSprawy(){
   if (!dane) return;
   var sp = dane.sprawy || [], skrz = skrzynkaCzekajaca_();   /* Z-9 */
+  var lRobocie = sp.filter(function(s){ return czyWRobocie(s.status); }).length;
+  var lRozlicz = sp.filter(czyDoRozliczenia).length;
   var h = '<div class="chips" style="margin-top:10px">'+
-    '<button class="chip'+(filtrSpraw==='toku'?' on':'')+'" onclick="ustawFiltrSpraw(\'toku\')">W toku</button>'+
+    '<button class="chip'+(filtrSpraw==='robocie'?' on':'')+'" onclick="ustawFiltrSpraw(\'robocie\')">W robocie'+
+      (lRobocie?' · '+lRobocie:'')+'</button>'+
+    '<button class="chip'+(filtrSpraw==='rozliczenie'?' on':'')+'" onclick="ustawFiltrSpraw(\'rozliczenie\')">Do rozliczenia'+
+      (lRozlicz?' · '+lRozlicz:'')+'</button>'+
     '<button class="chip'+(filtrSpraw==='wszystkie'?' on':'')+'" onclick="ustawFiltrSpraw(\'wszystkie\')">Wszystkie</button></div>';
 
   var nowe = skrz.filter(function(w){ return w.rodzaj !== 'dopisek'; });
@@ -1726,15 +1809,22 @@ function rysujSprawy(){
     h += '<div class="fnote">status nada się przy przetwarzaniu — statusy wynikają z treści</div></div>';
   }
 
-  var lista = sp.filter(function(s){ return filtrSpraw==='wszystkie' || czyWToku(s.status); });
+  var lista = sp.filter(function(s){
+    if (filtrSpraw === 'wszystkie') return true;
+    if (filtrSpraw === 'rozliczenie') return czyDoRozliczenia(s);
+    return czyWRobocie(s.status);
+  });
   lista.sort(function(a,b){
     var pa = dniDo(a.termin), pb = dniDo(b.termin);
     var wa = (pa!==null && pa<=0) ? pa : 999, wb = (pb!==null && pb<=0) ? pb : 999;
     if (wa!==wb) return wa-wb;
     return String(b.utworzono||'').localeCompare(String(a.utworzono||''));
   });
-  h += '<div class="h">'+(filtrSpraw==='toku'?'W toku':'Wszystkie')+' · '+lista.length+'</div><div class="karta">';
-  if (!lista.length) h += '<div class="pusto">Pusto.</div>';
+  var naglowek = filtrSpraw==='robocie' ? 'W robocie'
+               : filtrSpraw==='rozliczenie' ? 'Do rozliczenia' : 'Wszystkie';
+  h += '<div class="h">'+naglowek+' · '+lista.length+'</div><div class="karta">';
+  if (!lista.length) h += '<div class="pusto">'+
+    (filtrSpraw==='rozliczenie' ? 'Nic nie czeka na fakturę.' : 'Pusto.')+'</div>';
   lista.forEach(function(s){ h += kafelSprawy_(s); });
   h += '</div>';
   el('ekranSprawy').innerHTML = h;
