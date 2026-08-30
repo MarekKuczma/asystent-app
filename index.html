@@ -1298,7 +1298,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v17';
+var WERSJA_SHELL = 'asystent-v18';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1536,12 +1536,10 @@ function rysujPuls(){
   if (!uwaga.length) h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div></div>';
   else {
     h += '<div class="karta">';
+    /* Z-10b: ten sam kafelek co na liście spraw. Plakietka = POWÓD uwagi
+       (p[1]), status ląduje na dole obok numeru. */
     uwaga.slice(0,6).forEach(function(p){
-      var s = p[0], m = maszynaSprawy(s);
-      h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
-        '<div class="ic k-'+(m?kodRodzaju(m.rodzaj):'inne')+'">'+ikonaRodzaju(m?kodRodzaju(m.rodzaj):'inne')+'</div>'+
-        '<div class="mid"><div class="t1">'+esc(s.tytul||s.maszyna)+'</div>'+
-        '<div class="t2">'+esc(s.maszyna||'')+' · '+esc(s.status)+'</div></div>'+p[1]+'</div>';
+      h += kafelSprawy_(p[0], { pill: p[1], status: true });
     });
     h += '</div>';
   }
@@ -1677,10 +1675,15 @@ function dataKrotka_(iso){
   var s = String(iso);
   return s.slice(8, 10) + '.' + s.slice(5, 7);
 }
-function kafelSprawy_(s){
+/* `opcje.pill` — gotowa plakietka zamiast domyślnej (Puls niesie tam POWÓD
+   uwagi, nie status). `opcje.status` — dopisz status na dole, obok numeru
+   (na Pulsie plakietka go nie pokazuje, a warto wiedzieć, na czym stoi). */
+function kafelSprawy_(s, opcje){
+  opcje = opcje || {};
   var m = maszynaSprawy(s), d = dniDo(s.termin), wToku = czyWToku(s.status);
-  var pill = (d !== null && d < 0 && wToku) ? '<span class="pill red">po terminie</span>'
-           : (d === 0 && wToku) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status);
+  var pill = opcje.pill ||
+             ((d !== null && d < 0 && wToku) ? '<span class="pill red">po terminie</span>'
+           : (d === 0 && wToku) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status));
   var klucz, podpis = '', vin = false;
   if (m){
     klucz = kluczMaszyny(m);
@@ -1694,13 +1697,14 @@ function kafelSprawy_(s){
     ter = '<span class="s-ter' + ((d !== null && d < 0) ? ' red' : '') + '">termin: ' +
           dataKrotka_(s.termin) + '</span>';
   }
+  var stat = opcje.status ? '<span class="s-nr">' + esc(s.status) + '</span>' : '';
   return '<div class="row" onclick="otworzSprawe(\'' + s.id + '\')">' +
     '<div class="ic k-' + (m ? kodRodzaju(m.rodzaj) : 'inne') + '">' +
     ikonaRodzaju(m ? kodRodzaju(m.rodzaj) : 'inne') + '</div>' +
     '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(klucz) + '</span>' + pill + '</div>' +
     (podpis ? '<div class="s-podpis' + (vin ? ' vin' : '') + '">' + esc(podpis) + '</div>' : '') +
     '<div class="s-opis">' + esc(s.tytul || '') + '</div>' +
-    '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + ter + '</div></div></div>';
+    '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + stat + ter + '</div></div></div>';
 }
 var filtrSpraw = 'toku';
 function rysujSprawy(){
