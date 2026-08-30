@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16a34a">
+<meta name="theme-color" content="#14532d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="ikona-192.png">
 <link rel="apple-touch-icon" href="ikona-192.png">
@@ -28,36 +28,56 @@ body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
         żeby pętla animacji "plyn" nie miała szwu — lekcja Z-95 z Floty) ---- */
 /* --stozek = kolory obracającej się obwódki (Z-81 z Floty), --glow-krycie
    = siła poświaty pod nią. KAŻDA paleta musi mieć własne, tak jak w rodzinie. */
-:root, [data-paleta="gamma"]{--akcent:#16a34a; --akcent-moc:#22c55e;
+/* ================= PALETY v9 (W-40/W-41) =================
+   JEDYNE ŹRÓDŁO WARTOŚCI: Claude Ai/Dokumentacja/KANON-PALET.md — jedna lista
+   dla trzech appek. NIE zmieniać liczb tutaj bez zmiany kanonu.
+   4 podstawowe własne Asystenta + 4 specjalne przepisane 1:1 z rodziny
+   (gradienty 90deg, 6 przystanków, animowane — patrz sekcja niżej).
+   Domyślna: JADEIT = dawna zielona "Gamma" (akcent podbity #16a34a→#15803d,
+   bo na białym miał 3,92:1 przy progu 4,5). Nazwa `gamma` należy odtąd do
+   rodzinnej, FIOLETOWEJ palety specjalnej — nie mylić. */
+:root, [data-paleta="jadeit"]{--akcent:#15803d; --akcent-moc:#22c55e;
    --grad:linear-gradient(135deg,#22c55e,#7e22ce);
    --ikona-grad:linear-gradient(135deg,#052e16,#16a34a 55%,#7e22ce); --on-akcent:#fff;
    --wskaznik-grad:linear-gradient(90deg,#4ade80,#7e22ce,#4ade80);
    --stozek:#86efac,#22c55e,#7e22ce,#22c55e,#86efac; --glow-krycie:.42}
-[data-paleta="zelazna"]{--akcent:#b91c1c; --akcent-moc:#dc2626;
+[data-paleta="hot-iron"]{--akcent:#b91c1c; --akcent-moc:#dc2626;
    --grad:linear-gradient(135deg,#dc2626,#f59e0b);
    --ikona-grad:linear-gradient(135deg,#450a0a,#dc2626 55%,#f59e0b); --on-akcent:#fff;
    --wskaznik-grad:linear-gradient(90deg,#f59e0b,#dc2626,#f59e0b);
    --stozek:#fbbf24,#f59e0b,#dc2626,#f59e0b,#fbbf24; --glow-krycie:.42}
-[data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
-   --grad:linear-gradient(135deg,#dc2626,#1d4ed8);
-   --ikona-grad:linear-gradient(135deg,#7f1d1d,#1e3a8a); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444);
-   --stozek:#93c5fd,#2563eb,#dc2626,#2563eb,#93c5fd; --glow-krycie:.42}
 [data-paleta="widmo"]{--akcent:#6d28d9; --akcent-moc:#8b5cf6;
    --grad:linear-gradient(135deg,#7c3aed,#ef4444);
    --ikona-grad:linear-gradient(135deg,#2e1065,#7c3aed 60%,#ef4444); --on-akcent:#fff;
    --wskaznik-grad:linear-gradient(90deg,#a78bfa,#ef4444,#a78bfa);
    --stozek:#c4b5fd,#8b5cf6,#ef4444,#8b5cf6,#c4b5fd; --glow-krycie:.45}
-[data-paleta="zorza"]{--akcent:#7c3aed; --akcent-moc:#8b5cf6;
-   --grad:linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899);
-   --ikona-grad:linear-gradient(135deg,#164e63,#7c3aed,#db2777); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee);
-   --stozek:#22d3ee,#8b5cf6,#ec4899,#8b5cf6,#22d3ee; --glow-krycie:.62}
-[data-paleta="rgb"]{--akcent:#e11d48; --akcent-moc:#f43f5e;
-   --grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55);
-   --ikona-grad:linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff); --on-akcent:#fff;
-   --wskaznik-grad:linear-gradient(90deg,#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55);
-   --stozek:#ff2d55,#ffd60a,#34c759,#0a84ff,#ff2d55; --glow-krycie:.70}
+[data-paleta="fiord"]{--akcent:#0e7490; --akcent-moc:#0891b2;
+   --grad:linear-gradient(135deg,#0e7490,#38bdf8,#99f6e4);
+   --ikona-grad:linear-gradient(135deg,#083344,#0e7490 55%,#38bdf8); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#67e8f9,#0e7490,#67e8f9);
+   --stozek:#99f6e4,#38bdf8,#0e7490,#38bdf8,#99f6e4; --glow-krycie:.42}
+/* --- specjalne: wartości RODZINY (W-31), tu tylko przełożone na tokeny
+   Asystenta (--grad/--stozek/...). Gradienty 90deg 6-stop = pętla bez szwu. --- */
+[data-paleta="aurora"]{--akcent:#1d63d8; --akcent-moc:#4D96FF;
+   --grad:linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2,#4D96FF,#24314A);
+   --ikona-grad:linear-gradient(135deg,#1A1F36,#4D96FF 55%,#8A2BE2); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#4D96FF,#79DFFF,#8A2BE2,#79DFFF,#4D96FF);
+   --stozek:#79DFFF,#4D96FF,#8A2BE2,#4D96FF,#79DFFF; --glow-krycie:.62}
+[data-paleta="rgb"]{--akcent:#22d3ee; --akcent-moc:#a855f7;
+   --grad:linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95);
+   --ikona-grad:linear-gradient(135deg,#ff2d95,#a855f7,#22d3ee,#22c55e); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#facc15,#ff2d95);
+   --stozek:#ff2d95,#a855f7,#22d3ee,#facc15,#ff2d95; --glow-krycie:.70}
+[data-paleta="gamma"]{--akcent:#7e22ce; --akcent-moc:#9333ea;
+   --grad:linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d);
+   --ikona-grad:linear-gradient(135deg,#052e16,#22c55e 55%,#9333ea); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#4ade80,#9333ea,#4ade80);
+   --stozek:#86efac,#22c55e,#9333ea,#22c55e,#86efac; --glow-krycie:.50}
+[data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
+   --grad:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
+   --ikona-grad:linear-gradient(135deg,#7f1d1d,#1e3a8a); --on-akcent:#fff;
+   --wskaznik-grad:linear-gradient(90deg,#ef4444,#2563eb,#ef4444);
+   --stozek:#93c5fd,#2563eb,#dc2626,#2563eb,#93c5fd; --glow-krycie:.50}
 
 /* ---- OBRACAJĄCA SIĘ OBWÓDKA PRZYCISKÓW (Z-81, przepisane z Floty) ----
    @property pozwala przeglądarce interpolować kąt; bez rejestracji obwódka
@@ -86,22 +106,27 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
 .stat, .term{position:relative}
 
 /* ---- PALETY SPECJALNE: animowane tła i poświaty (wzorzec aurora/rgb) ---- */
-[data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,
+[data-paleta="aurora"] .przycisk,[data-paleta="aurora"] .hero,
+[data-paleta="gamma"] .przycisk,[data-paleta="gamma"] .hero,
+[data-paleta="heros"] .przycisk,[data-paleta="heros"] .hero,
 [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{
-   background-size:250% 250%; animation:zorzaPlyn 7s ease-in-out infinite}
+   background-size:250% 100%; animation:plynPalety 7s ease-in-out infinite}
 [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero{animation-duration:4.5s}
-@keyframes zorzaPlyn{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes plynPalety{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 /* nagłówek: przebiegający połysk (przebiegPolysk z Floty) */
 @keyframes przebiegPolysk{0%{transform:translateX(-130%)}45%,100%{transform:translateX(130%)}}
-[data-paleta="zorza"] header,[data-paleta="rgb"] header{position:relative; overflow:hidden;
-   background-size:250% 250%; animation:zorzaPlyn 7s ease-in-out infinite}
+[data-paleta="aurora"] header,[data-paleta="gamma"] header,
+[data-paleta="heros"] header,[data-paleta="rgb"] header{position:relative; overflow:hidden;
+   background-size:250% 100%; animation:plynPalety 7s ease-in-out infinite}
 [data-paleta="rgb"] header{animation-duration:4.5s}
-[data-paleta="zorza"] header::after,[data-paleta="rgb"] header::after{content:'';
+[data-paleta="aurora"] header::after,[data-paleta="gamma"] header::after,
+[data-paleta="heros"] header::after,[data-paleta="rgb"] header::after{content:'';
    position:absolute; inset:0; pointer-events:none;
    background:linear-gradient(105deg, transparent 36%, rgba(255,255,255,.38) 50%, transparent 64%);
    transform:translateX(-130%); animation:przebiegPolysk 5.5s ease-in-out infinite}
 /* ikona w nagłówku i kafelki kategorii: wirujący pierścień */
-[data-paleta="zorza"] header img.mark,[data-paleta="rgb"] header img.mark{
+[data-paleta="aurora"] header img.mark,[data-paleta="gamma"] header img.mark,
+[data-paleta="heros"] header img.mark,[data-paleta="rgb"] header img.mark{
    box-shadow:0 0 0 2px transparent, 0 2px 10px rgba(0,0,0,.35);
    outline:2px solid transparent; filter:drop-shadow(0 0 6px rgba(255,255,255,.45))}
 /* ⚠ Kafelki RODZAJU pojazdu NIE dostają tęczowej obwódki w paletach
@@ -110,12 +135,15 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
    Efekty palet specjalnych zostają tam, gdzie nic nie znaczą: nagłówek,
    przyciski, wskaźnik nawigacji, liczby na kaflach. */
 /* neon pod aktywną zakładką + świecąca ikona (jak w rodzinie) */
-[data-paleta="zorza"] nav .wskaznik i,[data-paleta="rgb"] nav .wskaznik i{
+[data-paleta="aurora"] nav .wskaznik i,[data-paleta="gamma"] nav .wskaznik i,
+[data-paleta="heros"] nav .wskaznik i,[data-paleta="rgb"] nav .wskaznik i{
    box-shadow:0 0 9px var(--akcent-moc)}
-[data-paleta="zorza"] nav button.on svg,[data-paleta="rgb"] nav button.on svg{
+[data-paleta="aurora"] nav button.on svg,[data-paleta="gamma"] nav button.on svg,
+[data-paleta="heros"] nav button.on svg,[data-paleta="rgb"] nav button.on svg{
    filter:drop-shadow(0 0 6px currentColor)}
 /* liczby na kaflach Pulsu: poświata */
-[data-paleta="rgb"] .stat .n,[data-paleta="zorza"] .stat .n{
+[data-paleta="rgb"] .stat .n,[data-paleta="aurora"] .stat .n,
+[data-paleta="gamma"] .stat .n,[data-paleta="heros"] .stat .n{
    filter:drop-shadow(0 0 8px rgba(168,85,247,.55))}
 
 /* ---- tryb jasny / ciemny ---- */
@@ -126,7 +154,29 @@ nav button.zg .plus-glow::after{content:''; position:absolute; inset:0; border-r
 [data-motyw="ciemny"]{--tlo:#101418; --karta:#181e25; --tekst:#e7eaee; --szary:#939ca7;
       --linia:#242c35; --wcisk:#1d242c; --cien:none;
       --blad:#f28b82; --bg-blad:#3a1d1b; --ok:#81c995; --bg-ok:#12291a;
-      --uwaga:#fbbf24; --bg-uwaga:#33270e}
+      --uwaga:#fbbf24; --bg-uwaga:#33270e;
+      /* v9: akcent Jadeitu (domyślnej) na ciemny — patrz blok niżej */
+      --akcent:#4ade80; --akcent-moc:#86efac}
+
+/* ---- v9: AKCENTY NA CIEMNY MOTYW, per paleta. Wcześniej ich NIE BYŁO —
+   akcent zostawał jasny na ciemnym tle i Widmo miało 2,60:1 (próg 4,5).
+   ⚠ PUŁAPKA Z-91 (z rodziny, tu obowiązuje tak samo): zmienna z bloku palety
+   działa w OBU motywach, a blok [data-motyw="ciemny"] wyżej jest PÓŹNIEJ
+   w pliku, więc przy równej wadze selektora nadpisałby KAŻDĄ paletę zielenią
+   Jadeitu. Dlatego każda paleta MUSI mieć własny blok 2-atrybutowy poniżej —
+   także rgb, którego akcent w ciemnym się nie zmienia.
+   Palety specjalne przebarwiają też tła (wartości z kanonu). */
+[data-motyw="ciemny"][data-paleta="hot-iron"]{--akcent:#f87171; --akcent-moc:#fca5a5}
+[data-motyw="ciemny"][data-paleta="widmo"]{--akcent:#a78bfa; --akcent-moc:#c4b5fd}
+[data-motyw="ciemny"][data-paleta="fiord"]{--akcent:#67e8f9; --akcent-moc:#a5f3fc}
+[data-motyw="ciemny"][data-paleta="aurora"]{--akcent:#79DFFF; --akcent-moc:#a5ecff;
+      --tlo:#12172b; --karta:#1A1F36; --linia:#2a3152; --wcisk:#232947}
+[data-motyw="ciemny"][data-paleta="rgb"]{--akcent:#22d3ee; --akcent-moc:#a855f7;
+      --tlo:#0a0b10; --karta:#141824; --linia:#232939; --wcisk:#1b202e}
+[data-motyw="ciemny"][data-paleta="gamma"]{--akcent:#c084fc; --akcent-moc:#d8b4fe;
+      --tlo:#0d1f14; --karta:#16281c; --linia:#22382a; --wcisk:#1c3023}
+[data-motyw="ciemny"][data-paleta="heros"]{--akcent:#93c5fd; --akcent-moc:#bfdbfe;
+      --tlo:#101223; --karta:#1b1d2e; --linia:#282b42; --wcisk:#222438}
 
 #app{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column;
      background:var(--tlo); position:relative}
@@ -160,8 +210,81 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pasek-sync .kropka{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
 .pasek-sync.offline .kropka{background:#f39c12}
 .pasek-sync.blad .kropka{background:var(--blad)}
+/* v8: cel dotyku był 56x16 px — palcem się w to nie trafiało (zgłoszenie
+   Marka 30.08). Teraz 44 px wysokości, z ikoną i stanem, bo sam tekst „dane z"
+   się nie zmienia po odświeżeniu (to data eksportu lustra) i wyglądało to jak
+   martwy przycisk. */
 .pasek-sync .odsw{margin-left:auto; border:0; background:none; color:var(--akcent);
-   font:inherit; font-size:10.5px; font-weight:700; cursor:pointer; padding:2px 4px}
+   font:inherit; font-size:11.5px; font-weight:700; cursor:pointer;
+   padding:11px 10px; min-height:44px; display:inline-flex; align-items:center;
+   gap:6px; border-radius:10px; -webkit-tap-highlight-color:transparent}
+.pasek-sync .odsw:active{background:var(--wcisk)}
+.pasek-sync .odsw svg{width:14px; height:14px; stroke:currentColor; fill:none;
+   stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.pasek-sync .odsw.kreci svg{animation:obrot .8s linear infinite}
+@keyframes obrot{to{transform:rotate(360deg)}}
+
+/* ---------- WYBIERAK MASZYNY (Z-8, wariant C „kompakt") ----------
+   ⚠ ROZJAZD Z RODZINĄ, ŚWIADOMY: Flota i Ewidencja używają natywnego
+   <select>. Tutaj przy 72 maszynach bębenek systemowy nie pozwalał szukać
+   ani odróżnić „Develon DX170 (1)" od „(2)" (nie widać VIN-u). Marek wybrał
+   wariant kompakt z makiety 30.08.2026. Jeśli się sprawdzi — przenosimy do
+   tamtych appek jako JEDEN wspólny kawałek, nie trzy kopie. */
+.pole{width:100%; display:flex; align-items:center; gap:11px; border:1px solid var(--linia);
+   background:var(--karta); color:var(--tekst); border-radius:12px; padding:11px 12px;
+   font:inherit; font-size:14.5px; text-align:left; cursor:pointer; min-height:56px}
+.pole .ik{width:34px; height:34px; border-radius:9px; display:flex; align-items:center;
+   justify-content:center; flex:none}
+.pole .ik svg{width:19px; height:19px}
+.pole .ik.pusta{background:var(--wcisk)} .pole .ik.pusta svg{stroke:var(--szary)}
+.pole .txt{min-width:0; flex:1}
+.pole .txt .a{font-weight:600; line-height:1.25}
+.pole .txt .b{font-size:11.5px; color:var(--szary)}
+.pole .txt .b.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px}
+.pole .strz{color:var(--szary); flex:none; font-size:13px}
+.pole.pusty .a{color:var(--szary); font-weight:500}
+
+/* panel na całym ekranie — nad nawigacją, dlatego z-index wyżej niż nav */
+.wyb{position:fixed; inset:0; background:var(--tlo); z-index:60; display:none;
+   flex-direction:column}
+.wyb.on{display:flex}
+.wyb .top{padding:11px 12px; border-bottom:1px solid var(--linia); background:var(--karta);
+   padding-top:calc(11px + env(safe-area-inset-top))}
+.wyb .rz{display:flex; gap:8px; align-items:center}
+.wyb input[type=search]{flex:1; border:1px solid var(--linia); background:var(--wcisk);
+   color:var(--tekst); border-radius:10px; padding:11px 12px; font:inherit;
+   font-size:16px; min-width:0}
+.wyb input[type=search]:focus{border-color:var(--akcent-moc); outline:none}
+.wyb .zamknij{border:0; background:none; color:var(--akcent); font:inherit; font-weight:700;
+   font-size:14px; cursor:pointer; padding:10px 4px; min-height:44px}
+.wyb .chipy{display:flex; gap:6px; overflow-x:auto; padding:9px 2px 2px; scrollbar-width:none}
+.wyb .chipy::-webkit-scrollbar{display:none}
+.wyb .chipy .chip{white-space:nowrap; min-height:34px; padding:7px 12px; font-size:11.5px}
+.wyb .lista{flex:1; overflow-y:auto; padding:4px 12px calc(12px + env(safe-area-inset-bottom))}
+.wyb .grupa{font-size:10.5px; text-transform:uppercase; letter-spacing:.7px; color:var(--szary);
+   font-weight:700; margin:14px 2px 5px}
+.wyb .grupa:first-child{margin-top:6px}
+.wyb .nic{color:var(--szary); font-size:13px; text-align:center; padding:26px 10px}
+/* wiersz kompaktowy: kolor rodzaju jako kreska z lewej, model/VIN do prawej.
+   Kolory NIE są tu wpisane z ręki — to ta sama paleta v93 co w .ic.k-*, żeby
+   koparka miała jeden odcień w całej rodzinie. */
+.crow{display:flex; align-items:baseline; gap:9px; padding:9px 4px 9px 11px;
+   border-top:1px solid var(--linia); cursor:pointer; position:relative; width:100%;
+   text-align:left; font:inherit; color:inherit; background:none; border-left:0;
+   border-right:0; border-bottom:0}
+.crow:first-of-type{border-top:0}
+.crow::before{content:''; position:absolute; left:0; top:9px; bottom:9px; width:3px;
+   border-radius:2px; background:#636E72}
+.crow.k-kop::before{background:#6AB04C}    .crow.k-osob::before{background:#F0932B}
+.crow.k-ciez::before{background:#0984E3}    .crow.k-hds::before{background:#9B59B6}
+.crow.k-przycz::before{background:#FD79A8}  .crow.k-bud::before{background:#3FA9B4}
+.crow.k-quad::before,.crow.k-inne::before{background:#636E72}
+.crow.k-brak::before{background:var(--linia)}
+.crow .kl{font-weight:600; font-size:14.5px}
+.crow .model{font-size:11.5px; color:var(--szary); margin-left:auto; text-align:right;
+   max-width:48%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.crow .model.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px}
+.crow:focus-visible{outline:2px solid var(--akcent-moc); outline-offset:-2px}
 
 /* kafle pulsu (bez kolorowych ramek — decyzja rundy 3) */
 .stats{display:grid; grid-template-columns:1fr 1fr; gap:9px}
@@ -361,8 +484,9 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    padding:9px 6px; cursor:pointer; text-align:center; transition:border-color .2s}
 .paleta.on{border-color:var(--akcent)}
 .paleta .sw{height:22px; border-radius:8px; margin-bottom:6px}
-.paleta.spec .sw{background-size:250% 250%; animation:zorzaPlyn 5s ease-in-out infinite}
+.paleta.spec .sw{background-size:250% 250%; animation:plynPalety 5s ease-in-out infinite}
 .paleta .pn{font-size:10.5px; font-weight:600; color:var(--szary)}
+.paleta .op{font-size:9px; color:var(--szary); margin-top:1px; opacity:.85}
 .paleta.on .pn{color:var(--tekst); font-weight:700}
 
 /* stopka wersji (W-22) */
@@ -422,9 +546,13 @@ nav .wskaznik.bez-zakladki{opacity:0}
   .kfl{animation:none; width:var(--do)}
   .przycisk-glow, .przycisk-glow::after,
   nav button.zg .plus-glow, nav button.zg .plus-glow::after,
-  [data-paleta="zorza"] header,[data-paleta="rgb"] header,
-  [data-paleta="zorza"] header::after,[data-paleta="rgb"] header::after,
-  [data-paleta="zorza"] .przycisk,[data-paleta="zorza"] .hero,
+  [data-paleta="aurora"] header,[data-paleta="gamma"] header,
+  [data-paleta="heros"] header,[data-paleta="rgb"] header,
+  [data-paleta="aurora"] header::after,[data-paleta="gamma"] header::after,
+  [data-paleta="heros"] header::after,[data-paleta="rgb"] header::after,
+  [data-paleta="aurora"] .przycisk,[data-paleta="aurora"] .hero,
+  [data-paleta="gamma"] .przycisk,[data-paleta="gamma"] .hero,
+  [data-paleta="heros"] .przycisk,[data-paleta="heros"] .hero,
   [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,
   .paleta.spec .sw{animation:none}
 }
@@ -480,6 +608,8 @@ nav .wskaznik.bez-zakladki{opacity:0}
     </nav>
   </div>
 
+  <div class="wyb" id="wybMaszyn" role="dialog" aria-modal="true" aria-label="Wybierz maszynę"></div>
+
   <div class="overlay-zapis" id="overlay"><div class="spinner"></div>
     <div class="tekst" id="overlayTekst">Zapisuję…</div></div>
 </div>
@@ -519,6 +649,7 @@ var I = {
                    back:  svg_('<path d="M15 18l-6-6 6-6"/>', 'width:13px;height:13px'),
   /* nowa, styl rodziny — pełna zębatka (sam okrąg z kreskami czytał się
      jak słońce, czyli jak ic-sun z rodziny) */
+  odswiez: svg_('<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>'),
   gear: svg_('<circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/>')
 };
 /* ---------- RODZAJ POJAZDU: kod, kolor i ikona ----------
@@ -612,10 +743,12 @@ function sortujMaszyny(lista){
 
 /* ---------- stan ---------- */
 var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
-          motyw:'asystent_motyw', paleta:'asystent_paleta' };
+          motyw:'asystent_motyw', paleta:'asystent_paleta',
+          spec:'asystent_palety_specjalne',          /* v9: bramka Z-83 */
+          migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v7';
+var WERSJA_SHELL = 'asystent-v9';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -677,6 +810,11 @@ function pobierzDane(cicho){
     }
     dane = d; dane._pobrano = Date.now();
     lsSet(K.dane, JSON.stringify(d));
+    /* v9: flaga palet specjalnych z serwera (API v3). Zapamiętana, żeby
+       bramka działała też offline; wczytajWyglad() cicho cofa na domyślną,
+       gdy ktoś stracił uprawnienie do wybranej palety. */
+    lsSet(K.spec, d.osoba && d.osoba.paletySpecjalne ? 'TAK' : 'NIE');
+    wczytajWyglad();
     rysujWszystko();
     return 'ok';
   }).catch(function(){
@@ -688,6 +826,40 @@ function pobierzDane(cicho){
 
 var stanSieci = { tryb:'ok', info:null };
 function stanSync(tryb, info){ stanSieci = { tryb:tryb, info:info }; rysujPuls(); }
+
+/* Z-8 (30.08.2026): kliknięcie „odśwież" nie dawało ŻADNEGO sygnału.
+   Powód: napis obok to `meta.aktualizacja`, czyli data eksportu LUSTRA — ta się
+   po odświeżeniu nie zmienia (zmienia ją dopiero ponowny eksport), a backend
+   dodatkowo trzyma lustro w cache 5 minut. Zapytanie leciało, tylko nie było
+   tego po czym poznać. Teraz przycisk sam mówi, co robi. */
+var napisOdswiez = 'odśwież';
+/* ⚠ Stan MUSI siedzieć w zmiennej, nie tylko w klasie na elemencie: udane
+   pobranie woła rysujWszystko(), które buduje pasek od nowa — dopisana ręcznie
+   klasa `kreci` znikała razem ze starym przyciskiem (złapane testem). */
+var trwaOdswiezanie = false;
+function odswiezRecznie(){
+  if (trwaOdswiezanie) return;
+  trwaOdswiezanie = true;
+  var b = el('btnOdsw'), t = el('btnOdswTxt');
+  if (b) b.classList.add('kreci');
+  if (t) t.textContent = 'odświeżam…';
+  napisOdswiez = 'odświeżam…';
+  var start = Date.now();
+  pobierzDane().then(function(stan){
+    /* minimum 400 ms, żeby przy szybkiej sieci mrugnięcie było widoczne */
+    setTimeout(function(){
+      trwaOdswiezanie = false;
+      napisOdswiez = stan === 'ok' ? 'aktualne' : 'odśwież';
+      var b2 = el('btnOdsw'), t2 = el('btnOdswTxt');
+      if (b2) b2.classList.remove('kreci');
+      if (t2) t2.textContent = napisOdswiez;
+      if (stan === 'ok') setTimeout(function(){
+        napisOdswiez = 'odśwież';
+        var t3 = el('btnOdswTxt'); if (t3) t3.textContent = napisOdswiez;
+      }, 1800);
+    }, Math.max(0, 400 - (Date.now() - start)));
+  });
+}
 
 /* ---------- LOGOWANIE ---------- */
 function pokazLogin(kom){
@@ -781,7 +953,8 @@ function rysujPuls(){
            : stanSieci.tryb==='blad' ? 'błąd: '+esc(stanSieci.info||'')
            : 'dane z: <b>'+esc(meta.aktualizacja||'—')+'</b>';
   h += '<div class="pasek-sync'+klasa+'"><span class="kropka"></span>'+opis+
-       '<button class="odsw" onclick="pobierzDane()">odśwież</button></div>';
+       '<button class="odsw'+(trwaOdswiezanie?' kreci':'')+'" id="btnOdsw" onclick="odswiezRecznie()">'+I.odswiez+
+       '<span id="btnOdswTxt">'+esc(napisOdswiez)+'</span></button></div>';
 
   h += kolejkaHTML();
 
@@ -1065,39 +1238,149 @@ function krokMiesiac(d){ kosztyIdx += d; rysujKoszty(); }
 function wybierzMiesiac(i){ kosztyIdx = i; kosztyKv = 'kat'; rysujKoszty(); }
 
 /* ---------- ZGŁOŚ (+ kolejka offline E-40/D50) ---------- */
-var wybranyTyp = 'Awaria';
+/* Z-8 (30.08.2026): USUNIĘTE chipy „Typ sprawy".
+   Powód (Marek): „czemu w ogóle muszę uzupełniać? nie powinno się samo robić
+   z kontekstu?" — ma rację i to jest wprost Zasada #1 projektu: statusy (a typ
+   tak samo) WYNIKAJĄ Z TREŚCI, nie z klikania. Typ nadaje AI przy imporcie
+   ze Skrzynki. Backend przyjmuje puste `typ` (API.gs: d.typ || ''), więc
+   wdrożenie Apps Script NIE było potrzebne — API zostaje na v2.
+   Przy okazji znika błąd: ustawTyp() wołało rysujZglos(), które przerysowywało
+   cały ekran i kasowało wpisaną treść oraz wybraną maszynę (potwierdzone
+   pomiarem: treść 60 znaków -> 0, maszyna P014 -> P046). */
+var wybranaMaszyna = '';   /* id maszyny albo '' = nie wiem */
+var zgloszenieDraft = '';  /* treść przeżywa przerysowanie ekranu (np. po cichym pobraniu danych) */
+var wybOtwarty = false, wybSzukaj = '', wybKat = '';
+
 function rysujZglos(){
   if (!dane) return;
+  var m = maszynaPoId_(wybranaMaszyna);
   var h = '<div class="f">'+
     '<div class="komunikat" id="zglosKomunikat"></div>'+
-    '<label>Maszyna</label><select id="zgMaszyna">';
-  /* ta sama kolejność co w Szukaj i w listach Floty/Ewidencji:
-     kategorie wg rangaTypu_, w środku alfabetycznie; etykieta „klucz — model" */
-  var ostatniaKat = null;
-  sortujMaszyny(dane.maszyny||[]).forEach(function(m){
-    var kat = nazwaKategorii_(m);
-    if (kat !== ostatniaKat){
-      if (ostatniaKat !== null) h += '</optgroup>';
-      ostatniaKat = kat;
-      h += '<optgroup label="'+esc(kat)+'">';
-    }
-    var model = modelMaszyny(m);
-    h += '<option value="'+esc(m.id)+'">'+esc(kluczMaszyny(m))+
-         (model ? ' — '+esc(model) : '')+'</option>';
-  });
-  if (ostatniaKat !== null) h += '</optgroup>';
-  h += '<option value="">— nie wiem / inna (opisz w treści)</option></select>';
-  h += '<label>Typ</label><div class="chips" id="zgTypy">'+
-    ['Awaria','Serwis','Przegląd','Zakup','Inne'].map(function(t){
-      return '<button class="chip'+(t===wybranyTyp?' on':'')+'" onclick="ustawTyp(\''+t+'\')">'+t+'</button>';
-    }).join('')+'</div>';
-  h += '<label>Co się dzieje?</label>'+
+    '<label>Maszyna</label>'+ poleMaszynyHTML_(m) +
+    '<label for="zgTresc">Co się dzieje?</label>'+
     '<textarea id="zgTresc" rows="5" placeholder="np. pękł wąż hydrauliczny, Janek załatwił u Hydromexu, 800 zł gotówką"></textarea>'+
     '<div class="przycisk-glow" style="margin-top:16px"><button class="przycisk" onclick="wyslijZgloszenie()">Wyślij zgłoszenie</button></div>'+
-    '<div class="fnote">wpis trafia do skrzynki i dostaje status „Nowe" —<br>statusów nie ustawiasz, wynikają z treści</div></div>';
+    '<div class="fnote">wpis trafia do skrzynki i dostaje status „Nowe" —<br>'+
+    'statusu ani typu nie ustawiasz, wynikają z treści</div></div>';
   el('ekranZglos').innerHTML = h;
+  var ta = el('zgTresc');
+  ta.value = zgloszenieDraft;                       /* nie gub tego, co pisał */
+  ta.oninput = function(){ zgloszenieDraft = ta.value; };
+  el('zgMaszynaPole').onclick = otworzWybierak;
 }
-function ustawTyp(t){ wybranyTyp = t; rysujZglos(); }
+
+function maszynaPoId_(id){
+  if (!id) return null;
+  var l = dane && dane.maszyny || [];
+  for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+  return null;
+}
+function poleMaszynyHTML_(m){
+  if (!m){
+    return '<button type="button" class="pole pusty" id="zgMaszynaPole" '+
+      'aria-haspopup="dialog"><span class="ik pusta">'+
+      ikonaRodzaju('inne')+'</span><span class="txt"><span class="a">Wybierz maszynę…</span>'+
+      '<span class="b">'+((dane.maszyny||[]).length)+' pozycji · można też opisać słowami</span>'+
+      '</span><span class="strz">▾</span></button>';
+  }
+  var kod = kodRodzaju(m.rodzaj), podpis = podpisMaszyny(m), vin = czyKoparka_(m) && m.vin;
+  return '<button type="button" class="pole" id="zgMaszynaPole" aria-haspopup="dialog">'+
+    '<span class="ik ic k-'+kod+'">'+ikonaRodzaju(kod)+'</span>'+
+    '<span class="txt"><span class="a">'+esc(kluczMaszyny(m))+'</span>'+
+    (podpis ? '<span class="b'+(vin?' vin':'')+'">'+esc(podpis)+'</span>' : '')+
+    '</span><span class="strz">▾</span></button>';
+}
+
+/* ---------- wybierak: otwieranie, „wstecz", lista ---------- */
+function otworzWybierak(){
+  wybOtwarty = true; wybSzukaj = ''; wybKat = '';
+  rysujWybierak();
+  el('wybMaszyn').classList.add('on');
+  /* Telefonowy przycisk WSTECZ ma zamykać panel, a nie wychodzić z aplikacji.
+     Natywny <select> robił to sam; własny panel musi o to zadbać. */
+  history.pushState({ wybierak: 1 }, '');
+  setTimeout(function(){ var i = el('wybSzukaj'); if (i) i.focus(); }, 60);
+}
+function zamknijWybierak(zHistorii){
+  if (!wybOtwarty) return;
+  wybOtwarty = false;
+  el('wybMaszyn').classList.remove('on');
+  if (!zHistorii && history.state && history.state.wybierak) history.back();
+}
+window.addEventListener('popstate', function(){
+  if (wybOtwarty) zamknijWybierak(true);
+});
+function wybierzMaszyne(id){
+  wybranaMaszyna = id;
+  zamknijWybierak();
+  rysujZglos();
+}
+
+function rysujWybierak(){
+  el('wybMaszyn').innerHTML =
+    '<div class="top"><div class="rz">'+
+      '<input type="search" id="wybSzukaj" autocomplete="off" '+
+      'placeholder="szukaj: nazwa, rejestracja, VIN…" aria-label="Szukaj maszyny">'+
+      '<button type="button" class="zamknij" id="wybAnuluj">Anuluj</button></div>'+
+      '<div class="chipy" id="wybChipy"></div></div>'+
+    '<div class="lista" id="wybLista" role="listbox" aria-label="Maszyny"></div>';
+  el('wybAnuluj').onclick = function(){ zamknijWybierak(); };
+  var inp = el('wybSzukaj');
+  inp.value = wybSzukaj;
+  inp.oninput = function(){ wybSzukaj = inp.value; rysujWybLista(); };
+  rysujWybChipy(); rysujWybLista();
+}
+function rysujWybChipy(){
+  var obecne = {};
+  (dane.maszyny||[]).forEach(function(m){ obecne[rangaTypu_(m.rodzaj)] = true; });
+  var h = '<button type="button" class="chip'+(wybKat===''?' on':'')+'" data-kat="">Wszystkie</button>';
+  Object.keys(obecne).sort().forEach(function(r){
+    h += '<button type="button" class="chip'+(wybKat===r?' on':'')+'" data-kat="'+r+'">'+
+         esc(NAZWY_KATEGORII[r] || 'Pozostałe')+'</button>';
+  });
+  var box = el('wybChipy');
+  box.innerHTML = h;
+  box.onclick = function(e){
+    var b = e.target.closest('.chip'); if (!b) return;
+    wybKat = b.getAttribute('data-kat');
+    rysujWybChipy(); rysujWybLista();
+  };
+}
+function pasujeDoWyszukiwania_(m){
+  if (wybKat && String(rangaTypu_(m.rodzaj)) !== wybKat) return false;
+  var q = String(wybSzukaj||'').trim().toLowerCase().replace(/\s+/g,'');
+  if (!q) return true;
+  var stog = (kluczMaszyny(m)+' '+(m.nazwa||'')+' '+(m.vin||'')+' '+(m.rodzaj||''))
+             .toLowerCase().replace(/\s+/g,'');
+  return stog.indexOf(q) !== -1;
+}
+function rysujWybLista(){
+  var lista = sortujMaszyny(dane.maszyny||[]).filter(pasujeDoWyszukiwania_);
+  var box = el('wybLista');
+  if (!lista.length){
+    box.innerHTML = '<div class="nic">Nic nie pasuje do „'+esc(wybSzukaj)+'".<br>'+
+      'Możesz zostawić maszynę pustą i opisać ją słowami.</div>';
+    return;
+  }
+  var h = '', ostatnia = null;
+  lista.forEach(function(m){
+    var kat = nazwaKategorii_(m);
+    if (kat !== ostatnia){ ostatnia = kat; h += '<div class="grupa">'+esc(kat)+'</div>'; }
+    var kod = kodRodzaju(m.rodzaj), podpis = podpisMaszyny(m), vin = czyKoparka_(m) && m.vin;
+    h += '<button type="button" class="crow k-'+kod+'" role="option" data-id="'+esc(m.id)+'">'+
+      '<span class="kl">'+esc(kluczMaszyny(m))+'</span>'+
+      (podpis ? '<span class="model'+(vin?' vin':'')+'">'+esc(podpis)+'</span>' : '')+
+      '</button>';
+  });
+  h += '<button type="button" class="crow k-brak" role="option" data-id="">'+
+       '<span class="kl">Nie wiem / inna</span>'+
+       '<span class="model">opiszę w treści</span></button>';
+  box.innerHTML = h;
+  box.onclick = function(e){
+    var b = e.target.closest('[data-id]'); if (!b) return;
+    wybierzMaszyne(b.getAttribute('data-id'));
+  };
+}
 
 function kolejka(){ try{ return JSON.parse(ls(K.kolejka)||'[]'); }catch(e){ return []; } }
 function zapiszKolejke(k){ lsSet(K.kolejka, JSON.stringify(k)); }
@@ -1165,11 +1448,15 @@ function wyslijWpis(wpis, komunikatId, poSukcesie){
 function wyslijZgloszenie(){
   var tresc = el('zgTresc').value.trim();
   if (!tresc){ var k=el('zglosKomunikat'); k.className='komunikat blad'; k.textContent='Napisz, co się dzieje.'; return; }
-  var sel = el('zgMaszyna');
-  var m = (dane.maszyny||[]).find(function(x){ return x.id === sel.value; });
+  var m = maszynaPoId_(wybranaMaszyna);
+  /* typ leci PUSTY — ustala go AI z treści przy imporcie (Zasada #1) */
   wyslijWpis({ rodzaj:'zgloszenie', dotyczy:'', maszyna: m ? m.nazwa+(m.rejestracja?' ('+m.rejestracja+')':'') : '',
-               typ: wybranyTyp, tresc: tresc, klucz: uuid() },
-    'zglosKomunikat', function(){ el('zgTresc').value=''; });
+               typ: '', tresc: tresc, klucz: uuid() },
+    'zglosKomunikat', function(){
+      zgloszenieDraft = ''; wybranaMaszyna = '';
+      var t = el('zgTresc'); if (t) t.value = '';
+      rysujZglos();
+    });
 }
 function wyslijDopisek(){
   var tresc = el('dopiszTresc').value.trim();
@@ -1180,34 +1467,105 @@ function wyslijDopisek(){
 }
 
 /* ---------- USTAWIENIA ---------- */
+/* ---- PALETY v9: rejestr. Wartości próbek = te same gradienty co w CSS;
+   duplikacja świadoma (rodzina robi tak samo — próbka na liście musi żyć
+   w JS, bo lista powstaje dynamicznie). Kanon: KANON-PALET.md. ---- */
 var PALETY_DEF = [
-  ['gamma','Gamma','linear-gradient(135deg,#22c55e,#7e22ce)',false],
-  ['zelazna','Żelazna','linear-gradient(135deg,#dc2626,#f59e0b)',false],
-  ['heros','Heros','linear-gradient(135deg,#dc2626,#1d4ed8)',false],
-  ['widmo','Widmo','linear-gradient(135deg,#7c3aed,#ef4444)',false],
-  ['zorza','Zorza','linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899)',true],
-  ['rgb','Pełne RGB','linear-gradient(135deg,#ff2d55,#ffd60a,#34c759,#0a84ff)',true]
+  ['jadeit',  'Jadeit',  'domyślna',           'linear-gradient(135deg,#22c55e,#7e22ce)', false],
+  ['hot-iron','Hot Iron','czerwień i bursztyn','linear-gradient(135deg,#dc2626,#f59e0b)', false],
+  ['widmo',   'Widmo',   'fiolet i czerwień',  'linear-gradient(135deg,#7c3aed,#ef4444)', false],
+  ['fiord',   'Fiord',   'chłodny turkus',     'linear-gradient(135deg,#0e7490,#38bdf8,#99f6e4)', false],
+  ['aurora',  'Aurora',  'chłodna poświata',   'linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2,#4D96FF,#24314A)', true],
+  ['rgb',     'Full RGB','pełne kolory',       'linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95)', true],
+  ['gamma',   'Gamma',   'zieleń i fiolet',    'linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d)', true],
+  ['heros',   'Heros',   'czerwień i błękit',  'linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d)', true]
 ];
+var PALETA_DOMYSLNA = 'jadeit';
+
+function paletaDef_(id){
+  for (var i = 0; i < PALETY_DEF.length; i++)
+    if (PALETY_DEF[i][0] === id) return PALETY_DEF[i];
+  return null;
+}
+/* Bramka jak w rodzinie (Z-83): palety specjalne widzi tylko osoba z TAK
+   w kolumnie "Paleta specjalna" arkusza Użytkownicy. Flaga przychodzi
+   z serwera przy każdym pobraniu danych (API v3) i jest zapamiętywana,
+   żeby działała też offline. */
+function paletaDozwolona(id){
+  var p = paletaDef_(id);
+  if (!p) return false;
+  return !p[4] || ls(K.spec) === 'TAK';
+}
+/* Jednorazowe przeniesienie starych id (W-40). ⚠ MUSI być jednorazowe,
+   z flagą: stare `gamma` (zielone) idzie na `jadeit`, ale nowe `gamma`
+   (fioletowa, rodzinna) to poprawny wybór — migracja puszczana przy każdym
+   starcie cofałaby świeżo wybraną Gammę z powrotem na Jadeit. */
+var STARE_ID_PALET = { gamma:'jadeit', zelazna:'hot-iron', zorza:'jadeit' };
+function migrujPalety_(){
+  if (ls(K.migracjaPalet)) return;
+  var p = ls(K.paleta);
+  if (p && STARE_ID_PALET[p]) lsSet(K.paleta, STARE_ID_PALET[p]);
+  lsSet(K.migracjaPalet, 'v9');
+}
+/* Tryb: jasny / ciemny / auto ("Jak w telefonie") — jak w rodzinie od W-31. */
+function wyborMotywu(){ return ls(K.motyw) || 'jasny'; }
+function motywEfektywny(){
+  var w = wyborMotywu();
+  if (w !== 'auto') return w;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ? 'ciemny' : 'jasny';
+}
+/* Pasek systemowy telefonu (meta theme-color) reaguje na PALETĘ, nie na tryb.
+   Najciemniejszy odcień nagłówka — z JEDNYM wyjątkiem: aurora #4D96FF to
+   świadoma decyzja Marka 30.08.2026 (wersja z Floty), NIE przeoczenie. */
+var KOLOR_PASKA = { jadeit:'#14532d', 'hot-iron':'#7f1d1d', widmo:'#4c1d95',
+                    fiord:'#083344', aurora:'#4D96FF', rgb:'#a855f7',
+                    gamma:'#14532d', heros:'#7f1d1d' };
+function wczytajWyglad(){
+  var p = ls(K.paleta) || PALETA_DOMYSLNA;
+  /* utrata uprawnienia (albo paleta z czasów, gdy je miał) -> cicho domyślna */
+  if (!paletaDozwolona(p)){ p = PALETA_DOMYSLNA; lsSet(K.paleta, p); }
+  document.documentElement.dataset.paleta = p;
+  document.documentElement.dataset.motyw = motywEfektywny();
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', KOLOR_PASKA[p] || KOLOR_PASKA[PALETA_DOMYSLNA]);
+}
+if (window.matchMedia){
+  var zapytanieMotywu_ = window.matchMedia('(prefers-color-scheme: dark)');
+  var naZmianeSystemu_ = function(){
+    if (wyborMotywu() === 'auto'){ wczytajWyglad(); rysujUstawienia(); }
+  };
+  if (zapytanieMotywu_.addEventListener) zapytanieMotywu_.addEventListener('change', naZmianeSystemu_);
+  else if (zapytanieMotywu_.addListener) zapytanieMotywu_.addListener(naZmianeSystemu_);  /* starsze iOS */
+}
+
 function rysujUstawienia(){
-  var motyw = document.documentElement.dataset.motyw;
-  var paleta = document.documentElement.dataset.paleta;
+  var motyw = wyborMotywu();
+  var paleta = document.documentElement.dataset.paleta || PALETA_DOMYSLNA;
+  function kafel(p){
+    return '<div class="paleta'+(p[4]?' spec':'')+(paleta===p[0]?' on':'')+'" '+
+      'onclick="ustawPalete(\''+p[0]+'\')" role="button" tabindex="0">'+
+      '<div class="sw" style="background:'+p[3]+'"></div>'+
+      '<div class="pn">'+p[1]+'</div><div class="op">'+p[2]+'</div></div>';
+  }
+  function przyciskTrybu(id, napis){
+    return '<button class="opcja'+(motyw===id?' on':'')+'" onclick="ustawMotyw(\''+id+'\')">'+napis+'</button>';
+  }
   var h = '<div class="h" style="margin-top:12px">Wygląd</div><div class="karta ust">'+
     '<label class="h" style="margin:2px 2px 8px">Tryb</label><div class="opcje">'+
-    '<button class="opcja'+(motyw==='jasny'?' on':'')+'" onclick="ustawMotyw(\'jasny\')">Jasny</button>'+
-    '<button class="opcja'+(motyw==='ciemny'?' on':'')+'" onclick="ustawMotyw(\'ciemny\')">Ciemny</button></div>'+
+    przyciskTrybu('jasny','Jasny')+przyciskTrybu('ciemny','Ciemny')+
+    przyciskTrybu('auto','Jak w telefonie')+'</div>'+
     '<label class="h" style="margin:14px 2px 8px">Paleta</label><div class="palety">';
-  PALETY_DEF.forEach(function(p){
-    if (p[3]) return;
-    h += '<div class="paleta'+(paleta===p[0]?' on':'')+'" onclick="ustawPalete(\''+p[0]+'\')">'+
-      '<div class="sw" style="background:'+p[2]+'"></div><div class="pn">'+p[1]+'</div></div>';
-  });
-  h += '</div><label class="h" style="margin:14px 2px 8px">Palety specjalne</label><div class="palety">';
-  PALETY_DEF.forEach(function(p){
-    if (!p[3]) return;
-    h += '<div class="paleta spec'+(paleta===p[0]?' on':'')+'" onclick="ustawPalete(\''+p[0]+'\')">'+
-      '<div class="sw" style="background:'+p[2]+'"></div><div class="pn">'+p[1]+'</div></div>';
-  });
-  h += '</div><div class="fnote">wybór zapamiętany na tym telefonie</div></div>';
+  PALETY_DEF.forEach(function(p){ if (!p[4]) h += kafel(p); });
+  h += '</div>';
+  /* Sekcja specjalnych ZNIKA w całości bez uprawnienia — jak w rodzinie
+     (nie pokazujemy pustej ramki z nagłówkiem). */
+  if (ls(K.spec) === 'TAK'){
+    h += '<label class="h" style="margin:14px 2px 8px">Palety specjalne</label><div class="palety">';
+    PALETY_DEF.forEach(function(p){ if (p[4]) h += kafel(p); });
+    h += '</div>';
+  }
+  h += '<div class="fnote">wybór zapamiętany na tym telefonie</div></div>';
 
   var os = dane && dane.osoba || {};
   h += '<div class="h">Konto</div><div class="karta">'+
@@ -1219,26 +1577,14 @@ function rysujUstawienia(){
   el('ekranUstawienia').innerHTML = h;
   pokazWersje();
 }
-/* Pasek systemowy telefonu (meta theme-color). Jak we Flocie i Ewidencji:
-   reaguje na PALETĘ, nie na tryb jasny/ciemny. System przyjmuje jeden pełny
-   kolor (gradientu tam być nie może), więc bierzemy najciemniejszy odcień
-   nagłówka danej palety. */
-var KOLOR_PASKA = { gamma:'#14532d', zelazna:'#7f1d1d', heros:'#1e3a8a',
-                    widmo:'#4c1d95', zorza:'#155e75', rgb:'#a855f7' };
-function ustawPasekSystemowy(){
-  var p = document.documentElement.dataset.paleta || 'gamma';
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', KOLOR_PASKA[p] || KOLOR_PASKA.gamma);
-}
 function ustawMotyw(m){
-  document.documentElement.dataset.motyw = m; lsSet(K.motyw, m); rysujUstawienia();
+  lsSet(K.motyw, m); wczytajWyglad(); rysujUstawienia();
 }
 function ustawPalete(p){
-  document.documentElement.dataset.paleta = p; lsSet(K.paleta, p);
-  ustawPasekSystemowy(); rysujUstawienia();
+  if (!paletaDozwolona(p)) return;
+  lsSet(K.paleta, p); wczytajWyglad(); rysujUstawienia();
 }
 
-/* ---------- overlay + wersje ---------- */
 function overlay(on, tekst){
   el('overlayTekst').textContent = tekst || 'Zapisuję…';
   el('overlay').classList.toggle('on', !!on);
@@ -1284,10 +1630,9 @@ function startAplikacji(){
 }
 
 (function boot(){
-  /* motyw + paleta z pamieci telefonu */
-  var m = ls(K.motyw); if (m) document.documentElement.dataset.motyw = m;
-  var p = ls(K.paleta); if (p) document.documentElement.dataset.paleta = p;
-  ustawPasekSystemowy();
+  /* v9: jednorazowa migracja starych id palet, potem wygląd z pamięci */
+  migrujPalety_();
+  wczytajWyglad();
   zbudujNav();
 
   if ('serviceWorker' in navigator){
