@@ -2,7 +2,7 @@
    Konwencja nazwy cache: asystent-vNN — NUMER podbijać przy KAŻDEJ zmianie
    plików aplikacji (inaczej przeglądarki podadzą stare pliki z cache).
    Stopka w aplikacji pokazuje 'asystent-vNN' — patrz obsługa message. */
-var WERSJA_CACHE = 'asystent-v11';  /* v11: animacje guzikow 1:1 z rodzina (stozki wielopunktowe, plyn linear, poswiata .85 w ciemnym, polysk tylko RGB) */
+var WERSJA_CACHE = 'asystent-v12';  /* v12: male elementy (plus, paski wykresu) w paletach specjalnych dostaja prosty gradient 135deg (--grad-maly) zamiast zapetlonego */
 var SHELL = [
   './', './index.html', './config.js', './manifest.json',
   './ikona-192.png', './ikona-512.png',

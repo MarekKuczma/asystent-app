@@ -57,33 +57,42 @@ body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
    --wskaznik-grad:linear-gradient(90deg,#67e8f9,#0e7490,#67e8f9);
    --stozek:#99f6e4,#38bdf8,#0e7490,#38bdf8,#99f6e4; --glow-krycie:.42}
 /* --- specjalne: wartości RODZINY (W-31), tu tylko przełożone na tokeny
-   Asystenta (--grad/--stozek/...). Gradienty 90deg 6-stop = pętla bez szwu. --- */
+   Asystenta (--grad/--stozek/...). Gradienty 90deg 6-stop = pętla bez szwu.
+   --grad-maly (v12): PEŁNY --grad jest zapętlony (ciemny→jasny→ciemny) i na
+   MAŁYCH, statycznych elementach — plus w nawigacji, paski wykresu — wygląda
+   jak paski (uwaga Marka). Małe elementy biorą prosty 135deg z kluczowych
+   barw palety, w duchu guzików palet podstawowych; duże (przycisk, nagłówek,
+   hero) zostają na pełnym, bo tam gradient PŁYNIE i pętla jest potrzebna. */
 [data-paleta="aurora"]{--akcent:#1d63d8; --akcent-moc:#4D96FF;
    --grad:linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2,#4D96FF,#24314A);
    --ikona-grad:var(--grad); --on-akcent:#fff;
    --wskaznik-grad:var(--grad);
    /* stożek 1:1 z rodziny (Flota ~l.976) — 11 przystanków, nie skracać */
    --stozek:#79DFFF,#4D96FF,#3B6FE0,#24314A,#4C1D95,#8A2BE2,#A855F7,#C4A2FF,#DBEAFE,#A5E9FF,#79DFFF;
-   --glow-krycie:.42}
+   --glow-krycie:.42;
+   --grad-maly:linear-gradient(135deg,#4D96FF,#8A2BE2)}
 [data-paleta="rgb"]{--akcent:#22d3ee; --akcent-moc:#a855f7;
    --grad:linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95);
    --ikona-grad:var(--grad); --on-akcent:#fff;
    --wskaznik-grad:var(--grad);
-   --stozek:#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95; --glow-krycie:.55}
+   --stozek:#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95; --glow-krycie:.55;
+   --grad-maly:linear-gradient(135deg,#ff2d95,#a855f7,#22d3ee)}
 [data-paleta="gamma"]{--akcent:#7e22ce; --akcent-moc:#9333ea;
    --grad:linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d);
    --ikona-grad:var(--grad); --on-akcent:#fff;
    --wskaznik-grad:var(--grad);
    /* stożek 1:1 z rodziny — 12 przystanków przez zieleń, fiolet i pastele */
    --stozek:#4ade80,#22c55e,#16a34a,#14532d,#3b0764,#7e22ce,#9333ea,#c084fc,#e9d5ff,#bbf7d0,#86efac,#4ade80;
-   --glow-krycie:.42}
+   --glow-krycie:.42;
+   --grad-maly:linear-gradient(135deg,#22c55e,#9333ea)}
 [data-paleta="heros"]{--akcent:#1d4ed8; --akcent-moc:#2563eb;
    --grad:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
    --ikona-grad:var(--grad); --on-akcent:#fff;
    --wskaznik-grad:var(--grad);
    /* stożek 1:1 z rodziny — 11 przystanków przez czerwień, granat i pastele */
    --stozek:#f87171,#dc2626,#b91c1c,#7f1d1d,#1e3a8a,#2563eb,#3b82f6,#93c5fd,#dbeafe,#fecaca,#f87171;
-   --glow-krycie:.42}
+   --glow-krycie:.42;
+   --grad-maly:linear-gradient(135deg,#dc2626,#1d4ed8)}
 
 /* ---- OBRACAJĄCA SIĘ OBWÓDKA PRZYCISKÓW (Z-81, przepisane z Floty) ----
    @property pozwala przeglądarce interpolować kąt; bez rejestracji obwódka
@@ -438,7 +447,7 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 /* Wykres kosztów „wypełnia się" przy każdym pokazaniu ekranu: paski jadą
    od zera do swojej szerokości (--do). Kolejne słupki startują z opóźnieniem,
    żeby było widać ruch z góry na dół. */
-.kfl{height:100%; border-radius:4px; background:var(--grad);
+.kfl{height:100%; border-radius:4px; background:var(--grad-maly,var(--grad));
    width:0; animation:wypelnij .75s cubic-bezier(.25,.9,.35,1) forwards;
    animation-delay:var(--zwloka,0ms)}
 @keyframes wypelnij{from{width:0} to{width:var(--do)}}
@@ -571,7 +580,7 @@ nav button{flex:1; border:0; background:none; color:var(--szary); font:inherit; 
 nav button svg{width:21px;height:21px;stroke:currentColor; transition:transform .2s}
 nav button.on{color:var(--akcent); font-weight:700}
 nav button.on svg{transform:translateY(-1px)}
-nav button.zg .plus{width:100%;height:100%;border-radius:50%;background:var(--grad);
+nav button.zg .plus{width:100%;height:100%;border-radius:50%;background:var(--grad-maly,var(--grad));
    display:flex;align-items:center;justify-content:center; transition:transform .2s}
 nav button.zg.on .plus-glow{transform:scale(1.07)}
 nav button.zg .plus svg{stroke:#fff;width:20px;height:20px; stroke-width:2.2}
@@ -816,7 +825,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v11';
+var WERSJA_SHELL = 'asystent-v12';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
