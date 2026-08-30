@@ -2,7 +2,7 @@
    Konwencja nazwy cache: asystent-vNN — NUMER podbijać przy KAŻDEJ zmianie
    plików aplikacji (inaczej przeglądarki podadzą stare pliki z cache).
    Stopka w aplikacji pokazuje 'asystent-vNN' — patrz obsługa message. */
-var WERSJA_CACHE = 'asystent-v15';  /* v15 (30.08.2026): Z-9 — zaimportowane wpisy znikają ze "czeka" (po S-ID z lustra), wybór "Nie wiem / inna" widoczny w polu, odstęp rejestracja/model, nowy przykład w "Co się dzieje?" */
+var WERSJA_CACHE = 'asystent-v16';  /* v16 (30.08.2026): Z-9b — pole wybieraka: lupa zamiast ikony-słonca, pytajnik przy "Nie wiem / inna" (+ całe Z-9 z v15) */
 var SHELL = [
   './', './index.html', './config.js', './manifest.json',
   './ikona-192.png', './ikona-512.png',

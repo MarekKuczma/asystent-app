@@ -1207,6 +1207,21 @@ var IKONY_POJ = {
   quad:      '<circle cx="6" cy="16.4" r="2.6"/><circle cx="18" cy="16.4" r="2.6"/><path d="M6 13.8h3.4l1.9-3.4h4.3l1.5 3.4h.9"/><path d="M11.3 10.4 10 7.6h4"/>',
   inne:      '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
 };
+/* Z-9b (30.08.2026, uwaga Marka): pole wybieraka miało ikonę kategorii
+   „inne" (kółko z promieniami — wyglądała jak słońce). Pole dostaje własne:
+   lupę przy „Wybierz maszynę…" (bo otwiera wyszukiwarkę) i pytajnik przy
+   „Nie wiem / inna". Ikony kategorii na listach — bez zmian. */
+function ikonaLupa_(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
+         'stroke-linecap="round" stroke-linejoin="round">'+
+         '<circle cx="11" cy="11" r="6.5"/><path d="m15.8 15.8 4.4 4.4"/></svg>';
+}
+function ikonaPytajnik_(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
+         'stroke-linecap="round" stroke-linejoin="round">'+
+         '<circle cx="12" cy="12" r="8.5"/>'+
+         '<path d="M9.5 9.2a2.6 2.6 0 0 1 5.1.8c0 1.7-2.6 2.1-2.6 3.5M12 16.9h.01"/></svg>';
+}
 function ikonaRodzaju(kod){
   var k = kod==='kop' ? 'koparka' : kod==='ciez' ? 'bus' : kod==='osob' ? 'auto'
         : kod==='przycz' ? 'przyczepa' : kod==='hds' ? 'hds'
@@ -1270,7 +1285,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v15';
+var WERSJA_SHELL = 'asystent-v16';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1816,7 +1831,7 @@ function maszynaPoId_(id){
 function poleMaszynyHTML_(m){
   if (!m && wybranaMaszyna === '~brak'){
     return '<button type="button" class="pole" id="zgMaszynaPole" aria-haspopup="dialog">'+
-      '<span class="ik ic k-brak">'+ikonaRodzaju('inne')+'</span>'+
+      '<span class="ik ic k-brak">'+ikonaPytajnik_()+'</span>'+
       '<span class="txt"><span class="a">Nie wiem / inna</span>'+
       '<span class="b">opiszę maszynę w treści</span></span>'+
       '<span class="strz">▾</span></button>';
@@ -1824,7 +1839,7 @@ function poleMaszynyHTML_(m){
   if (!m){
     return '<button type="button" class="pole pusty" id="zgMaszynaPole" '+
       'aria-haspopup="dialog"><span class="ik pusta">'+
-      ikonaRodzaju('inne')+'</span><span class="txt"><span class="a">Wybierz maszynę…</span>'+
+      ikonaLupa_()+'</span><span class="txt"><span class="a">Wybierz maszynę…</span>'+
       '<span class="b">'+((dane.maszyny||[]).length)+' pozycji · można też opisać słowami</span>'+
       '</span><span class="strz">▾</span></button>';
   }
