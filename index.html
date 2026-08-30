@@ -221,8 +221,12 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pasek-sync .odsw:active{background:var(--wcisk)}
 .pasek-sync .odsw svg{width:14px; height:14px; stroke:currentColor; fill:none;
    stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
-.pasek-sync .odsw.kreci svg{animation:obrot .8s linear infinite}
-@keyframes obrot{to{transform:rotate(360deg)}}
+/* ⚠ NIE nazywać tej animacji `obrot` — ta nazwa należy do Z-81 (animuje
+   zmienną --kat obwódek conic-gradient). Nazwy @keyframes są GLOBALNE i druga
+   definicja nadpisała pierwszą, przez co plus w nawigacji i przycisk „Wyślij"
+   kręciły się W CAŁOŚCI (zgłoszenie Marka z telefonu, 30.08.2026).
+   `kreciSie` (transform:rotate) już istnieje przy spinnerze zapisu — używamy jej. */
+.pasek-sync .odsw.kreci svg{animation:kreciSie .8s linear infinite}
 
 /* ---------- WYBIERAK MASZYNY (Z-8, wariant C „kompakt") ----------
    ⚠ ROZJAZD Z RODZINĄ, ŚWIADOMY: Flota i Ewidencja używają natywnego
@@ -474,20 +478,53 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 
 /* ustawienia */
 .ust label{display:block}
-.opcje{display:flex; gap:8px; margin-top:4px}
-.opcja{flex:1; border:1.5px solid var(--linia); background:var(--karta); color:var(--szary);
-   font:inherit; font-size:12.5px; font-weight:600; padding:10px; border-radius:12px;
-   cursor:pointer; text-align:center; transition:border-color .2s,color .2s}
-.opcja.on{border-color:var(--akcent); color:var(--akcent); font-weight:700}
-.palety{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px}
-.paleta{border:1.5px solid var(--linia); background:var(--karta); border-radius:12px;
-   padding:9px 6px; cursor:pointer; text-align:center; transition:border-color .2s}
-.paleta.on{border-color:var(--akcent)}
-.paleta .sw{height:22px; border-radius:8px; margin-bottom:6px}
-.paleta.spec .sw{background-size:250% 250%; animation:plynPalety 5s ease-in-out infinite}
-.paleta .pn{font-size:10.5px; font-weight:600; color:var(--szary)}
-.paleta .op{font-size:9px; color:var(--szary); margin-top:1px; opacity:.85}
-.paleta.on .pn{color:var(--tekst); font-weight:700}
+/* ==== Ustawienia — układ 1:1 z Flotą/Ewidencją (W-31), tokeny Asystenta.
+   Te same klasy co w rodzinie (.ust-tryb, .pal-poz, .ust-notka), żeby paczka
+   wyglądu W-41 była przenośna. Prośba Marka 30.08: "chciałbym aby było takie
+   same" — różnice tylko tam, gdzie Asystent nie ma tokenu rodziny
+   (--bg-akcentjasny/--przycisk-cien → color-mix z fallbackiem). ==== */
+.ust-sekcja{font-size:11.5px; font-weight:700; text-transform:uppercase;
+   letter-spacing:.07em; color:var(--szary); margin:18px 2px 9px;
+   display:flex; align-items:center; gap:7px}
+.ust-sekcja:first-of-type{margin-top:2px}
+.ust-sekcja svg{width:14px; height:14px; stroke:currentColor}
+.ust-tryb{display:flex; gap:8px}
+.ust-tryb button{flex:1; min-width:0; border:1.5px solid var(--linia);
+   background:var(--karta); color:var(--szary); font-family:inherit;
+   font-size:12px; font-weight:600; line-height:1.25; padding:11px 3px 9px;
+   border-radius:12px; display:flex; flex-direction:column; align-items:center;
+   gap:6px; cursor:pointer; transition:border-color .2s, color .2s, background .2s}
+.ust-tryb button svg{width:19px; height:19px; stroke:currentColor}
+.ust-tryb button.wybrany{border-color:var(--akcent); color:var(--akcent);
+   font-weight:700; background:var(--wcisk);
+   background:color-mix(in srgb, var(--akcent) 10%, var(--karta))}
+.pal-lista{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+.pal-poz{display:block; width:100%; padding:9px; border-radius:13px;
+   border:1.5px solid var(--linia); background:var(--karta); color:var(--tekst);
+   font-family:inherit; text-align:left; position:relative; cursor:pointer;
+   transition:border-color .2s, box-shadow .2s}
+.pal-poz .probka{display:block; width:100%; height:38px; border-radius:9px;
+   margin-bottom:7px}
+/* Próbki palet specjalnych ruszają się już NA LIŚCIE — widać, że są inne,
+   zanim się je wybierze (wzorzec rodziny). Osobne keyframes: `plyn` i
+   `plynPalety` już istnieją i robią co innego — patrz lekcja z `obrot`. */
+.pal-poz.spec .probka{background-size:250% 100%; animation:probkaPlyn 5s linear infinite}
+@keyframes probkaPlyn{to{background-position:-250% 0}}
+.pal-poz .tekst{display:block}
+.pal-poz b{font-size:13.5px; display:block; line-height:1.2}
+.pal-poz .opis{display:block; font-size:11px; color:var(--szary)}
+.pal-poz .ptaszek{position:absolute; top:16px; right:16px; width:20px; height:20px;
+   color:#fff; opacity:0; filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))}
+.pal-poz .ptaszek svg{width:20px; height:20px; stroke:currentColor}
+.pal-poz.wybrana{border-color:var(--akcent);
+   box-shadow:0 0 0 3px var(--wcisk);
+   box-shadow:0 0 0 3px color-mix(in srgb, var(--akcent) 25%, transparent)}
+.pal-poz.wybrana .ptaszek{opacity:1}
+.pal-poz.wybrana b{font-weight:700}
+.ust-notka{font-size:11.5px; color:var(--szary); line-height:1.45;
+   margin:11px 2px 0; display:flex; gap:7px; align-items:flex-start}
+.ust-notka svg{width:14px; height:14px; flex:none; margin-top:1px; opacity:.7;
+   stroke:currentColor}
 
 /* stopka wersji (W-22) */
 .stopka-wersji{margin-top:16px; text-align:center; font-size:10px; color:var(--szary);
@@ -554,7 +591,7 @@ nav .wskaznik.bez-zakladki{opacity:0}
   [data-paleta="gamma"] .przycisk,[data-paleta="gamma"] .hero,
   [data-paleta="heros"] .przycisk,[data-paleta="heros"] .hero,
   [data-paleta="rgb"] .przycisk,[data-paleta="rgb"] .hero,
-  .paleta.spec .sw{animation:none}
+  .pal-poz.spec .probka{animation:none}
 }
 </style>
 </head>
@@ -649,6 +686,15 @@ var I = {
                    back:  svg_('<path d="M15 18l-6-6 6-6"/>', 'width:13px;height:13px'),
   /* nowa, styl rodziny — pełna zębatka (sam okrąg z kreskami czytał się
      jak słońce, czyli jak ic-sun z rodziny) */
+  /* W-41: ikony ekranu Ustawień — ścieżki 1:1 ze sprite'u rodziny
+     (ic-sun / ic-moon / ic-phone / ic-lock / ic-check; osoba dorysowana
+     w tym samym stylu, bo rodzina nie ma ic-user). */
+  slonce:  svg_('<circle cx="12" cy="12" r="4"/><path d="M12 3v1.8M12 19.2V21M21 12h-1.8M4.8 12H3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3M18.4 18.4l-1.3-1.3M6.9 6.9 5.6 5.6"/>'),
+  ksiezyc: svg_('<path d="M19.5 14.5A7.8 7.8 0 0 1 9.5 4.5a8 8 0 1 0 10 10Z"/>'),
+  telefon: svg_('<rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 5.2h3M10.8 18.6h2.4"/>'),
+  klodka:  svg_('<rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/>'),
+  osoba:   svg_('<circle cx="12" cy="8.2" r="3.4"/><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0"/>'),
+  check:   svg_('<circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.5 2.6 4.9-5.4"/>'),
   odswiez: svg_('<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>'),
   gear: svg_('<circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/>')
 };
@@ -748,7 +794,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v9';
+var WERSJA_SHELL = 'asystent-v10';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1542,30 +1588,38 @@ if (window.matchMedia){
 function rysujUstawienia(){
   var motyw = wyborMotywu();
   var paleta = document.documentElement.dataset.paleta || PALETA_DOMYSLNA;
+  /* Markup 1:1 z Flotą/Ewidencją (W-31): przyciski trybu z ikoną nad napisem,
+     kafle .pal-poz (próbka 38px + nazwa + opis + ptaszek), sekcja specjalnych
+     z kłódką i notką, notka o telefonie. Prośba Marka 30.08.2026. */
   function kafel(p){
-    return '<div class="paleta'+(p[4]?' spec':'')+(paleta===p[0]?' on':'')+'" '+
-      'onclick="ustawPalete(\''+p[0]+'\')" role="button" tabindex="0">'+
-      '<div class="sw" style="background:'+p[3]+'"></div>'+
-      '<div class="pn">'+p[1]+'</div><div class="op">'+p[2]+'</div></div>';
+    return '<button type="button" class="pal-poz'+(p[4]?' spec':'')+
+      (paleta===p[0]?' wybrana':'')+'" onclick="ustawPalete(\''+p[0]+'\')">'+
+      '<span class="probka" style="background:'+p[3]+'"></span>'+
+      '<span class="tekst"><b>'+p[1]+'</b><span class="opis">'+p[2]+'</span></span>'+
+      '<span class="ptaszek">'+I.check+'</span></button>';
   }
-  function przyciskTrybu(id, napis){
-    return '<button class="opcja'+(motyw===id?' on':'')+'" onclick="ustawMotyw(\''+id+'\')">'+napis+'</button>';
+  function przyciskTrybu(id, ikona, napis){
+    return '<button type="button" class="'+(motyw===id?'wybrany':'')+
+      '" onclick="ustawMotyw(\''+id+'\')">'+ikona+napis+'</button>';
   }
   var h = '<div class="h" style="margin-top:12px">Wygląd</div><div class="karta ust">'+
-    '<label class="h" style="margin:2px 2px 8px">Tryb</label><div class="opcje">'+
-    przyciskTrybu('jasny','Jasny')+przyciskTrybu('ciemny','Ciemny')+
-    przyciskTrybu('auto','Jak w telefonie')+'</div>'+
-    '<label class="h" style="margin:14px 2px 8px">Paleta</label><div class="palety">';
+    '<div class="ust-sekcja">Tryb</div><div class="ust-tryb">'+
+    przyciskTrybu('jasny', I.slonce, 'Jasny')+
+    przyciskTrybu('ciemny', I.ksiezyc, 'Ciemny')+
+    przyciskTrybu('auto', I.telefon, 'Jak w telefonie')+'</div>'+
+    '<div class="ust-sekcja">Paleta</div><div class="pal-lista">';
   PALETY_DEF.forEach(function(p){ if (!p[4]) h += kafel(p); });
   h += '</div>';
   /* Sekcja specjalnych ZNIKA w całości bez uprawnienia — jak w rodzinie
      (nie pokazujemy pustej ramki z nagłówkiem). */
   if (ls(K.spec) === 'TAK'){
-    h += '<label class="h" style="margin:14px 2px 8px">Palety specjalne</label><div class="palety">';
+    h += '<div class="ust-sekcja">'+I.klodka+'Palety specjalne</div><div class="pal-lista">';
     PALETY_DEF.forEach(function(p){ if (p[4]) h += kafel(p); });
-    h += '</div>';
+    h += '</div><div class="ust-notka">'+I.osoba+
+      '<span>Przyznane Tobie przez Marka — innym osobom te palety się nie pokazują.</span></div>';
   }
-  h += '<div class="fnote">wybór zapamiętany na tym telefonie</div></div>';
+  h += '<div class="ust-notka">'+I.telefon+
+    '<span>Wygląd zapamiętuje się w tym telefonie. Na innym urządzeniu ustawisz go osobno.</span></div></div>';
 
   var os = dane && dane.osoba || {};
   h += '<div class="h">Konto</div><div class="karta">'+
