@@ -961,6 +961,10 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .przycisk-drugi{width:100%; border:1.5px solid var(--linia); background:var(--karta); color:var(--szary);
    font:inherit; font-weight:600; font-size:13px; padding:11px; border-radius:14px; cursor:pointer; margin-top:8px}
 .fnote{font-size:10.5px; color:var(--szary); text-align:center; margin-top:8px; line-height:1.4}
+/* A-04t: „pokaż stare daty" — trzeci poziom hierarchii rodziny (W-36):
+   sam tekst w akcencie, bez ramki, bo to podgląd, nie akcja na maszynie. */
+.fnote .przycisk-link{background:none; border:0; font-family:inherit; font-size:11px;
+   font-weight:700; color:var(--akcent); padding:9px 12px; min-height:38px; cursor:pointer}
 
 /* komunikaty (wzorzec rodziny) */
 .komunikat{border-radius:12px; padding:12px 14px; margin:10px 0 2px; font-size:13px; display:none; line-height:1.45}
@@ -1298,7 +1302,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v19';
+var WERSJA_SHELL = 'asystent-v20';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1357,6 +1361,50 @@ function dniOd_(od){ var d = dniDo(od); return d === null ? null : -d; }
 /* Progi przypomnień — jedno miejsce do strojenia (cykl życia z notatki
    projektu). Nowe/Wycena w dniach ROBOCZYCH, reszta w kalendarzowych. */
 var PROGI = { nowe: 2, wycena: 3, realizacja: 7, faktura: 7 };
+/* A-04t (31.08.2026): terminy flotowe. `wyprzedzenie` — ile dni przed
+   wygaśnięciem zaczynamy przypominać (Marek: 14). `stare` — powyżej ilu dni
+   PO terminie przestajemy traktować datę jak alarm i uznajemy ją za brud
+   w danych (na 31.08: cztery auta z 2019/2025 r.). */
+var PROGI_TERMINY = { wyprzedzenie: 14, stare: 60 };
+var ETYKIETY_TERMINOW = { badanie:'badanie techniczne', oc:'polisa OC',
+                          udt:'przegląd UDT', mienie:'ubezpieczenie mienia' };
+/* Zwraca { pilne: [...], stare: [...] } — pozycja to { m, rodzaj, iso, dni }.
+   `dni` < 0 = po terminie. Sortowane chronologicznie: najstarsze wygaśnięcie
+   na górze, potem to, co dopiero nadchodzi. */
+function terminyFlotowe_(){
+  var pilne = [], stare = [];
+  (dane && dane.maszyny || []).forEach(function(m){
+    var ter = m.terminy || {};
+    for (var k in ETYKIETY_TERMINOW){
+      if (!ter[k]) continue;
+      var d = dniDo(ter[k]);
+      if (d === null) continue;
+      var poz = { m: m, rodzaj: k, iso: ter[k], dni: d };
+      if (d < -PROGI_TERMINY.stare) stare.push(poz);
+      else if (d <= PROGI_TERMINY.wyprzedzenie) pilne.push(poz);
+    }
+  });
+  var chrono = function(a, b){ return a.dni - b.dni; };
+  return { pilne: pilne.sort(chrono), stare: stare.sort(chrono) };
+}
+function kafelTerminu_(p){
+  var m = p.m, po = p.dni < 0;
+  var ile = Math.abs(p.dni);
+  var pill = po ? '<span class="pill red">wygasło ' + ile + ' dn.</span>'
+           : p.dni === 0 ? '<span class="pill red">wygasa DZIŚ</span>'
+           : '<span class="pill amber">za ' + ile + ' dn.</span>';
+  var podpis = podpisMaszyny(m), vin = czyKoparka_(m) && podpis === m.vin;
+  return '<div class="row" onclick="otworzMaszyne(\'' + m.id + '\')">' +
+    '<div class="ic k-' + kodRodzaju(m.rodzaj) + '">' + ikonaRodzaju(kodRodzaju(m.rodzaj)) + '</div>' +
+    '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(kluczMaszyny(m)) + '</span>' + pill + '</div>' +
+    (podpis ? '<div class="s-podpis' + (vin ? ' vin' : '') + '">' + esc(podpis) + '</div>' : '') +
+    '<div class="s-opis">' + ETYKIETY_TERMINOW[p.rodzaj] + '</div>' +
+    '<div class="g3"><span class="s-nr">' + esc(m.id) + '</span>' +
+    '<span class="s-ter' + (po ? ' red' : '') + '">ważne do: ' + dataPL(p.iso) + '</span></div></div></div>';
+}
+/* Czy stara lista jest rozwinięta — tylko widok, nic nie zapisujemy. */
+var stareTerminyOtwarte = false;
+function przelaczStareTerminy(){ stareTerminyOtwarte = !stareTerminyOtwarte; rysujPuls(); }
 
 /* ---------- API ---------- */
 function api(cialo){
@@ -1610,6 +1658,30 @@ function rysujPuls(){
     });
     if (uwaga.length > 6)
       h += '<div class="fnote">…i jeszcze '+(uwaga.length-6)+' — cała lista w zakładce Sprawy</div>';
+    h += '</div>';
+  }
+
+  /* A-04t: OSOBNA sekcja (wariant C) — terminy to nie to samo co sprawy
+     u mechanika. Wewnątrz wariant B: stare daty schowane pod jedną linijkę. */
+  var tf = terminyFlotowe_();
+  if (tf.pilne.length || tf.stare.length){
+    h += '<div class="h">Terminy floty — najbliższe '+PROGI_TERMINY.wyprzedzenie+' dni</div><div class="karta">';
+    if (!tf.pilne.length)
+      h += '<div class="pusto">Żaden termin nie wygasa w najbliższych '+
+           PROGI_TERMINY.wyprzedzenie+' dniach.</div>';
+    tf.pilne.slice(0, 8).forEach(function(p){ h += kafelTerminu_(p); });
+    if (tf.pilne.length > 8)
+      h += '<div class="fnote">…i jeszcze '+(tf.pilne.length-8)+' — reszta w kartach maszyn</div>';
+    if (tf.stare.length){
+      /* Wariant B: to NIE jest alarm na dziś, tylko brud w Spisie —
+         nie krzyczy czerwienią, ale też nie znika z oczu. */
+      if (stareTerminyOtwarte) tf.stare.forEach(function(p){ h += kafelTerminu_(p); });
+      h += '<div class="fnote"><button class="przycisk-link" onclick="event.stopPropagation();przelaczStareTerminy()">'+
+        (stareTerminyOtwarte ? 'Zwiń stare daty' :
+          tf.stare.length+' '+(tf.stare.length===1?'data starsza':'dat starszych')+
+          ' niż '+PROGI_TERMINY.stare+' dni — pokaż')+'</button>'+
+        '<div style="margin-top:4px">Prawdopodobnie stare wpisy w Spisie Floty, nie auta na chodzie — do przejrzenia.</div></div>';
+    }
     h += '</div>';
   }
 
