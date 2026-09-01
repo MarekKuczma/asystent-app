@@ -1302,11 +1302,30 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v20';
+var WERSJA_SHELL = 'asystent-v21';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
 var wersjaSW = null;
+
+/* ═══ NAGŁÓWEK RODZINY (W-49, 01.09.2026) ═════════════════════════
+   Druga linijka nagłówka w trzech appkach: „Rinkon • <osoba>". Blok jest
+   IDENTYCZNY CO DO ZNAKU w ewidencji, flocie i asystencie.
+
+   Skąd się wziął (uwaga przekazana Markowi 01.09.2026): po samych tytułach
+   nie było widać, czym która appka jest — „Ewidencja Floty Rinkon"
+   i „Rozliczenie Floty Rinkon" różnią się jednym słowem w Środku, a oko czyta
+   początek. Osoba ZOSTAJE tam, gdzie była — to jedyne miejsce poza pulpitem,
+   gdzie kierowca widzi, na czyim koncie wpisuje, a wpisy przypisuje się po
+   kodzie. Przed nią staje firma.
+
+   Bez osoby (przed zalogowaniem, u gościa z QR) zostaje samo „Rinkon" — żeby
+   nie wisiał samotny separator. */
+function liniaFirmy_(osoba){
+  var o = String(osoba == null ? '' : osoba).trim();
+  return o ? 'Rinkon \u2022 ' + o : 'Rinkon';
+}
+/* KONIEC WSPÓLNEGO BLOKU NAGŁÓWKA */
 
 function el(id){ return document.getElementById(id); }
 function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2451,7 +2470,7 @@ function pokazWersje(){
 /* ---------- rysowanie zbiorcze + start ---------- */
 function rysujWszystko(){
   stanSieci = { tryb:'ok', info:null };
-  el('kto').textContent = dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '';
+  el('kto').textContent = liniaFirmy_(dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '');   // W-49
   el('navKoszty').classList.toggle('ukryte', !dane.koszty);
   document.querySelector('nav').style.setProperty('--zakladki', dane.koszty ? 5 : 4);
   rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujKoszty(); rysujZglos(); rysujUstawieniaApki();
