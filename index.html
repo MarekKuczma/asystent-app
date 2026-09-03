@@ -966,6 +966,37 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .fnote .przycisk-link{background:none; border:0; font-family:inherit; font-size:11px;
    font-weight:700; color:var(--akcent); padding:9px 12px; min-height:38px; cursor:pointer}
 
+/* ---- A-17: Skrzynka — tryb „Porządkuj", powody, lista odrzuconych ----
+   Wariant C z makiety (wybór Marka 03.09.2026): na co dzień lista wygląda jak
+   dotąd, krzyżyki pojawiają się dopiero po włączeniu trybu. Powód: kciuk na
+   telefonie trafia w wiersz łatwiej, niż by się chciało, a odrzucenie wpisu to
+   jedyne miejsce, gdzie użytkownik SAM usuwa coś z widoku. */
+.sk-h-linia{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.sk-h-linia .h{margin:14px 0 8px}
+.sk-btn{display:inline-flex; align-items:center; justify-content:center; gap:6px;
+   font:inherit; font-size:11.5px; font-weight:600; padding:0 13px; min-height:44px;
+   border-radius:999px; cursor:pointer; flex:none; background:transparent;
+   color:var(--szary); border:1px solid var(--linia)}
+.sk-btn svg{width:14px; height:14px}
+.sk-btn.aktywny{color:var(--akcent); border-color:var(--akcent)}
+.sk-porzadkuj{min-height:36px; padding:0 12px}
+.sk-ikonbtn{width:44px; height:44px; border-radius:12px; flex:none; display:flex;
+   align-items:center; justify-content:center; background:transparent;
+   border:1px solid var(--linia); color:var(--szary); cursor:pointer}
+.sk-ikonbtn svg{width:16px; height:16px}
+.sk-panel{border-top:1px solid var(--linia); padding:10px 2px 4px}
+.sk-panel-t{font-size:12px; color:var(--szary); margin-bottom:8px}
+.sk-chipy{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+.sk-chip{font:inherit; font-size:11.5px; font-weight:600; padding:0 14px; min-height:44px;
+   display:inline-flex; align-items:center; border-radius:999px; cursor:pointer; border:0;
+   background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny)}
+.sk-linia{display:flex; align-items:center; justify-content:space-between; width:100%;
+   font:inherit; font-size:12px; font-weight:600; color:var(--szary); background:transparent;
+   border:0; padding:9px 0; min-height:38px; cursor:pointer}
+.sk-linia span{font-weight:700; color:var(--akcent)}
+.sk-szary .t1, .sk-szary .t2{opacity:.62}
+.sk-stopka{display:flex; justify-content:flex-end; padding-top:10px}
+
 /* komunikaty (wzorzec rodziny) */
 .komunikat{border-radius:12px; padding:12px 14px; margin:10px 0 2px; font-size:13px; display:none; line-height:1.45}
 .komunikat.ok{display:block; background:var(--bg-ok); border:1px solid var(--ok); color:var(--ok)}
@@ -1168,6 +1199,8 @@ var I = {
                    puls:  svg_('<path d="M3.2 12h3.3l2-5.6 3.4 11.2 2.4-7 1.6 3.4h4.9"/>'),
   /* nowa, styl rodziny */ lupa: svg_('<circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4 4"/>'),
   /* ic-plus */    plus:  svg_('<path d="M12 5v14M5 12h14"/>'),
+  /* A-17: krzyżyk (odrzuć wpis) — ta sama kreska co reszta zestawu */
+                   krzyzyk: svg_('<path d="m7 7 10 10M17 7 7 17"/>'),
   /* ic-clip */    sprawy:svg_('<path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/>'),
   /* ic-chart */   koszty:svg_('<path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/>'),
   /* ic-site */    budowa:svg_('<path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/>'),
@@ -1302,7 +1335,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v22';
+var WERSJA_SHELL = 'asystent-v23';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1580,6 +1613,120 @@ function skrzynkaCzekajaca_(){
     return !(w.rodzaj !== 'dopisek' && zrodla[w.s_id]);
   });
 }
+/* ================= A-17: Skrzynka — porządkowanie (wariant C) =================
+   Zasada, której ten kod pilnuje: użytkownik może wpis ODRZUCIĆ, ale nie może
+   go oznaczyć jako „przetworzony". „Przetworzone" znaczy „jest w Zgłoszeniach"
+   i ustawia się samo (backend porównuje S-ID z kolumną „Źródło"). Gdyby dało
+   się kliknąć to ręcznie, sprawa zniknęłaby z kolejki, nie trafiając nigdzie —
+   dokładnie ta dziura, przed którą Skrzynka miała chronić.                    */
+var porzadkujSkrzynke = false;   /* tryb C: krzyżyki dopiero po włączeniu */
+var odrzucanySId = null;         /* wpis z rozwiniętym paskiem powodów */
+var odrzuconeOtwarte = false;    /* zwinięta lista odrzuconych */
+var skrzKom = null;              /* jednorazowy komunikat pod kolejką */
+var POWODY = ['duplikat', 'pomyłka', 'nieaktualne', 'inne'];
+
+function przelaczPorzadkowanie(){
+  porzadkujSkrzynke = !porzadkujSkrzynke;
+  if (!porzadkujSkrzynke) odrzucanySId = null;
+  skrzKom = null; rysujPuls();
+}
+function pytajOPowod(sId){ odrzucanySId = (odrzucanySId === sId ? null : sId); rysujPuls(); }
+function anulujOdrzucenie(){ odrzucanySId = null; rysujPuls(); }
+function przelaczOdrzucone(){ odrzuconeOtwarte = !odrzuconeOtwarte; rysujPuls(); }
+
+/* Jedna droga dla wszystkich trzech akcji — mniej miejsc, gdzie można się
+   rozjechać z backendem. Po sukcesie ZAWSZE pobieramy dane od nowa: prawdą
+   jest arkusz, nie to, co przed chwilą narysowaliśmy. */
+function akcjaSkrzynki(cialo, komOk){
+  overlay(true, 'Zapisuję…');
+  api({ kod: ls(K.kod), akcja: 'oznacz', s_id: cialo.s_id, stan: cialo.stan,
+        powod: cialo.powod, starsze_niz: cialo.starsze_niz })
+  .then(function(d){
+    overlay(false);
+    odrzucanySId = null;
+    skrzKom = d.ok ? komOk : ('Nie udało się: ' + (d.blad || 'błąd serwera'));
+    if (d.ok) pobierzDane(true); else rysujPuls();
+  }).catch(function(){
+    overlay(false);
+    odrzucanySId = null;
+    /* Świadomie BEZ kolejki offline: kolejka służy zgłoszeniom (żeby nic nie
+       zginęło). Odrzucenie to zdejmowanie z listy — może spokojnie poczekać
+       na sieć, a wysłane „w ciemno" chowałoby wpis, którego serwer nie zdjął. */
+    skrzKom = 'Brak sieci — spróbuj jeszcze raz, gdy wróci zasięg.';
+    rysujPuls();
+  });
+}
+function odrzucWpis(sId, powod){
+  akcjaSkrzynki({ s_id: sId, stan: 'odrzucone', powod: powod },
+                'Wpis odrzucony — jest na liście odrzuconych, da się go cofnąć.');
+}
+function cofnijOdrzucenie(sId){
+  akcjaSkrzynki({ s_id: sId, stan: 'nowy' }, 'Wpis wrócił do kolejki.');
+}
+function wyczyscOdrzucone(){
+  akcjaSkrzynki({ stan: 'schowaj-odrzucone', starsze_niz: 0 },
+                'Lista odrzuconych wyczyszczona (wpisy zostają w arkuszu).');
+}
+
+function wierszSkrzynki_(w, prawa, klasa){
+  return '<div class="row'+(klasa||'')+'" style="cursor:default"><div class="ic">'+I.sprawy+'</div>'+
+    '<div class="mid"><div class="t1">'+
+    esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+
+    '</div><div class="t2">'+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+
+    esc((w.tresc||'').slice(0,70))+'…</div></div>'+prawa+'</div>';
+}
+
+function skrzynkaHTML(skrz){
+  var odrz = (dane && dane.skrzynkaOdrzucone) || [];
+  if (!skrz.length && !odrz.length){ porzadkujSkrzynke = false; return ''; }
+  var h = '';
+  if (skrz.length){
+    h += '<div class="sk-h-linia"><div class="h">W skrzynce — czeka na przetworzenie</div>'+
+         '<button class="sk-btn sk-porzadkuj'+(porzadkujSkrzynke?' aktywny':'')+
+         '" onclick="przelaczPorzadkowanie()">'+(porzadkujSkrzynke?'Gotowe':'Porządkuj')+'</button></div>';
+    h += '<div class="karta">';
+    skrz.forEach(function(w){
+      var prawa = porzadkujSkrzynke
+        ? '<button class="sk-ikonbtn" title="Odrzuć wpis" onclick="pytajOPowod(\''+esc(w.s_id)+'\')">'+I.krzyzyk+'</button>'
+        : '<span class="pill amber">czeka</span>';
+      h += wierszSkrzynki_(w, prawa);
+      if (porzadkujSkrzynke && odrzucanySId === w.s_id){
+        h += '<div class="sk-panel"><div class="sk-panel-t">Odrzucić ten wpis? Dlaczego:</div><div class="sk-chipy">';
+        POWODY.forEach(function(pw){
+          h += '<button class="sk-chip" onclick="odrzucWpis(\''+esc(w.s_id)+'\',\''+pw+'\')">'+pw+'</button>';
+        });
+        h += '</div><button class="sk-btn" onclick="anulujOdrzucenie()">Anuluj</button></div>';
+      }
+    });
+    h += '</div>';
+  }
+  if (odrz.length){
+    h += '<div class="karta"><button class="sk-linia" onclick="przelaczOdrzucone()">'+
+         odrz.length+' '+odmianaOdrzuconych_(odrz.length)+
+         '<span>'+(odrzuconeOtwarte?'ukryj':'pokaż')+'</span></button>';
+    if (odrzuconeOtwarte){
+      odrz.forEach(function(w){
+        var wroc = '<button class="sk-btn" onclick="cofnijOdrzucenie(\''+esc(w.s_id)+'\')">'+
+                   I.odswiez+'Wróć do kolejki</button>';
+        var kopia = { rodzaj:w.rodzaj, dotyczy:w.dotyczy, maszyna:w.maszyna,
+                      kto:'odrzucone '+(w.odrzucono||'—'), utworzono:(w.powod||''), tresc:w.tresc };
+        h += wierszSkrzynki_(kopia, wroc, ' sk-szary');
+      });
+      h += '<div class="sk-stopka"><button class="sk-btn" onclick="wyczyscOdrzucone()">Wyczyść odrzucone</button></div>'+
+           '<div class="fnote">Odrzucone starsze niż 30 dni chowają się same raz w miesiącu. '+
+           'Wiersze zostają w arkuszu — znikają tylko z aplikacji.</div>';
+    }
+    h += '</div>';
+  }
+  if (skrzKom) h += '<div class="fnote">'+esc(skrzKom)+'</div>';
+  return h;
+}
+function odmianaOdrzuconych_(n){
+  if (n === 1) return 'odrzucony wpis';
+  var d = n % 10, st = n % 100;
+  return (d >= 2 && d <= 4 && !(st >= 12 && st <= 14)) ? 'odrzucone' : 'odrzuconych';
+}
+
 /* ---------- PULS ---------- */
 function rysujPuls(){
   if (!dane) return;
@@ -1649,16 +1796,7 @@ function rysujPuls(){
 
   h += kolejkaHTML();
 
-  if (skrz.length){
-    h += '<div class="h">W skrzynce — czeka na przetworzenie</div><div class="karta">';
-    skrz.forEach(function(w){
-      h += '<div class="row" style="cursor:default"><div class="ic">'+I.sprawy+'</div><div class="mid">'+
-        '<div class="t1">'+esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+'</div>'+
-        '<div class="t2">'+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+esc((w.tresc||'').slice(0,70))+'…</div></div>'+
-        '<span class="pill amber">czeka</span></div>';
-    });
-    h += '</div>';
-  }
+  h += skrzynkaHTML(skrz);
 
   h += '<div class="h">Dziś wymaga uwagi</div>';
   if (!uwaga.length) {
