@@ -1335,7 +1335,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v23';
+var WERSJA_SHELL = 'asystent-v24';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1385,8 +1385,32 @@ function uuid(){ return 'k'+Date.now().toString(36)+Math.random().toString(36).s
 /* ---------- statusy: kolor plakietki ---------- */
 function pillStatus(s){
   var kl = {'Nowe':'green','Wycena':'acc','Umówione':'acc','W realizacji':'amber',
-            'Wykonane':'green','Rozliczone':'szara','Anulowane':'szara'}[s] || 'szara';
+            'Wstrzymane':'szara','Wykonane':'green','Rozliczone':'szara','Anulowane':'szara'}[s] || 'szara';
   return '<span class="pill '+kl+'">'+esc(s)+'</span>';
+}
+/* ===== A-18 (08.09.2026): status „Wstrzymane" =====
+   Znaczy: SPRAWA ŻYJE, ale czeka na kogoś innego i Marek o tym wie.
+   Powód powstania, policzony na prawdziwych danych 08.09: mail strażnika miał
+   12 alarmów, z czego 7 dotyczyło spraw czekających na Anetę, leasing, Huberta
+   albo Marka Tarkowskiego. Status „Nowe" mówił „nikt się tym nie zajął", a to
+   nieprawda — zajęto się, tylko piłka jest po czyjejś stronie. Mail zaczynał
+   być tłem, a to jest dokładnie ta droga, na końcu której nikt go nie czyta.
+
+   ⚠ ZASADA #1 (nic nie ginie) zostaje: wstrzymanie NIE jest zamknięciem.
+   - `wstrzymane_do` z datą → strażnik milczy DO tej daty, potem sprawa wraca
+     i dopomina się głośniej niż zwykle („wróciła po wstrzymaniu").
+   - `wstrzymane_do` puste → wstrzymane bezterminowo, ale raz w miesiącu
+     (1. dnia) mail przypomina JEDNĄ linijką, ile takich spraw leży.
+   Sprawa wstrzymana nadal jest „w toku" i widać ją w zakładce Sprawy. */
+function czyWstrzymana(s){
+  if (!s || s.status !== 'Wstrzymane') return false;
+  var d = dniDo(s.wstrzymane_do);
+  return d === null || d >= 0;      /* brak daty albo data jeszcze nie minęła */
+}
+function wstrzymanaWrocila(s){
+  if (!s || s.status !== 'Wstrzymane') return false;
+  var d = dniDo(s.wstrzymane_do);
+  return d !== null && d < 0;
 }
 /* ZAMKNIĘTE = nic już nie trzeba zrobić. „Wykonane" NIE jest zamknięte:
    wg cyklu życia z notatki projektu znaczy „zrobione, czekamy na fakturę". */
@@ -1741,26 +1765,43 @@ function rysujPuls(){
      wygrywa (niżej odsiewa `widziane`). Progi w PROGI, liczone w aplikacji
      — arkusz nietknięty (Zasada #1: status wynika z treści, nie z klikania). */
   var uwaga = [];
-  /* 1. termin minął — najważniejsze, bo ktoś czeka */
-  poTerminie.forEach(function(s){ uwaga.push([s, '<span class="pill red">po terminie '+(-dniDo(s.termin))+' dn.</span>']); });
-  /* 2. termin dziś */
-  terminDzis.forEach(function(s){ uwaga.push([s, '<span class="pill amber">termin DZIŚ</span>']); });
-  /* 3. Wykonane bez faktury — robota skończona, pieniądze nierozliczone */
-  sp.forEach(function(s){
-    if (s.status !== 'Wykonane' || s.nr_faktury) return;
-    var d = dniOd_(s.status_od);
-    if (d !== null && d > PROGI.faktura)
-      uwaga.push([s, '<span class="pill red">bez faktury '+d+' dn.</span>']);
-  });
-  /* 4. wisi w realizacji */
+  /* A-18: sprawy wstrzymane wypadają ze WSZYSTKICH reguł niżej — o to chodzi
+     w tym statusie. Wracają osobną regułą 0, gdy minie ich data powrotu. */
+  var czynne = wToku.filter(function(s){ return !czyWstrzymana(s); });
+  /* 0. wróciła po wstrzymaniu — minęła data, na którą sam ją odłożyłeś */
   wToku.forEach(function(s){
+    if (wstrzymanaWrocila(s))
+      uwaga.push([s, '<span class="pill amber">wróciła po wstrzymaniu</span>']);
+  });
+  /* ⚠ A-20b (08.09.2026, znalezione przy podglądzie maila): termin przestaje
+     alarmować, gdy sprawa jest już WYKONANA. Z0008 świecił „po terminie
+     4 dn.", choć auto pojechało na serwis dokładnie w terminie i przegląd był
+     zrobiony — pilnowaliśmy daty, która nic już nie znaczy. Kafelek w appce
+     wiedział to od Z-11 („Wykonane nie ma już terminu do pilnowania"), ale
+     reguły Pulsu i maila nie. Ta sama poprawka siedzi w `Straznik.gs`. */
+  var pilnujeTerminu = function(s){ return !czyWstrzymana(s) && s.status !== 'Wykonane'; };
+  /* 1. termin minął — najważniejsze, bo ktoś czeka */
+  poTerminie.filter(pilnujeTerminu)
+    .forEach(function(s){ uwaga.push([s, '<span class="pill red">po terminie '+(-dniDo(s.termin))+' dn.</span>']); });
+  /* 2. termin dziś */
+  terminDzis.filter(pilnujeTerminu)
+    .forEach(function(s){ uwaga.push([s, '<span class="pill amber">termin DZIŚ</span>']); });
+  /* 3. ⛔ REGUŁA USUNIĘTA 08.09.2026 (A-20) — „Wykonane bez faktury".
+     Marek: „statusy, że coś czeka na fakturę, to sprawa drugorzędna i nie
+     trzeba o tym pamiętać — faktura trafi tak czy tak". Alarm o tym zabierał
+     miejsce rzeczom, na które trzeba zareagować. Nie znika z oczu: liczba
+     spraw do rozliczenia idzie SPOKOJNĄ linijką pod listą uwag, a pełna lista
+     żyje w zakładce Sprawy → chip „Do rozliczenia". Numer faktury wpisuje się
+     tak czy owak, a docelowo ma go podpowiadać zestawienie kosztów (A-21). */
+  /* 4. wisi w realizacji */
+  czynne.forEach(function(s){
     if (s.status !== 'W realizacji') return;
     var d = dniOd_(s.status_od);
     if (d !== null && d > PROGI.realizacja)
       uwaga.push([s, '<span class="pill amber">w serwisie '+d+' dn.</span>']);
   });
   /* 5. brak wyceny */
-  wToku.forEach(function(s){
+  czynne.forEach(function(s){
     if (s.status !== 'Wycena') return;
     var d = dniRobocze_(s.status_od);
     if (d !== null && d > PROGI.wycena)
@@ -1768,12 +1809,12 @@ function rysujPuls(){
   });
   /* 6. Umówione bez terminu — luka w danych: status mówi „termin ustalony",
      a pola Termin nie ma, więc nic tej sprawy nie przypilnuje */
-  wToku.forEach(function(s){
+  czynne.forEach(function(s){
     if (s.status === 'Umówione' && !s.termin)
       uwaga.push([s, '<span class="pill amber">brak terminu</span>']);
   });
   /* 7. Nowe leży bez ruchu */
-  wToku.forEach(function(s){
+  czynne.forEach(function(s){
     if (s.status !== 'Nowe') return;
     var d = dniRobocze_(s.status_od || s.utworzono);
     if (d !== null && d > PROGI.nowe)
@@ -1805,7 +1846,12 @@ function rysujPuls(){
     h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div>'+
       (wToku.length ? '<div class="fnote">'+wToku.length+' '+
         (wToku.length===1?'sprawa w toku, żadna':'w toku, żadna')+
-        ' nie przekroczyła progu przypomnienia</div>' : '')+'</div>';
+        ' nie przekroczyła progu przypomnienia'+
+        /* A-18: bez tego dopisku „nic się nie pali" przy 7 wstrzymanych
+           wyglądałoby, jakby sprawy wyparowały. */
+        (sp.filter(czyWstrzymana).length
+          ? ' (w tym '+sp.filter(czyWstrzymana).length+' wstrzymanych)' : '')+
+        '</div>' : '')+'</div>';
   } else {
     h += '<div class="karta">';
     /* Z-10b: ten sam kafelek co na liście spraw. Plakietka = POWÓD uwagi
@@ -1816,6 +1862,19 @@ function rysujPuls(){
     if (uwaga.length > 6)
       h += '<div class="fnote">…i jeszcze '+(uwaga.length-6)+' — cała lista w zakładce Sprawy</div>';
     h += '</div>';
+  }
+
+  /* A-20 + A-18: dwie SPOKOJNE linijki pod listą uwag. Nie alarmują, ale nie
+     dają też zniknąć po cichu — obie rzeczy widać, żadna nie krzyczy. */
+  var wstrzymane = sp.filter(czyWstrzymana);
+  if (doRozliczenia.length || wstrzymane.length){
+    var cz = [];
+    if (doRozliczenia.length)
+      cz.push('<button class="przycisk-link" onclick="ustawFiltrSpraw(\'rozliczenie\');pokaz(\'sprawy\')">Do rozliczenia: '+
+        doRozliczenia.length+'</button>');
+    if (wstrzymane.length)
+      cz.push('Wstrzymane: '+wstrzymane.length);
+    h += '<div class="fnote" style="margin-top:-4px">'+cz.join(' &nbsp;·&nbsp; ')+'</div>';
   }
 
   /* A-04t: OSOBNA sekcja (wariant C) — terminy to nie to samo co sprawy
@@ -2017,13 +2076,16 @@ var filtrSpraw = 'robocie';
 function rysujSprawy(){
   if (!dane) return;
   var sp = dane.sprawy || [], skrz = skrzynkaCzekajaca_();   /* Z-9 */
-  var lRobocie = sp.filter(function(s){ return czyWRobocie(s.status); }).length;
+  var lRobocie = sp.filter(function(s){ return czyWRobocie(s.status) && !czyWstrzymana(s); }).length;
   var lRozlicz = sp.filter(czyDoRozliczenia).length;
+  var lWstrzym = sp.filter(czyWstrzymana).length;
   var h = '<div class="chips" style="margin-top:10px">'+
     '<button class="chip'+(filtrSpraw==='robocie'?' on':'')+'" onclick="ustawFiltrSpraw(\'robocie\')">W robocie'+
       (lRobocie?' · '+lRobocie:'')+'</button>'+
     '<button class="chip'+(filtrSpraw==='rozliczenie'?' on':'')+'" onclick="ustawFiltrSpraw(\'rozliczenie\')">Do rozliczenia'+
       (lRozlicz?' · '+lRozlicz:'')+'</button>'+
+    (lWstrzym ? '<button class="chip'+(filtrSpraw==='wstrzymane'?' on':'')+
+      '" onclick="ustawFiltrSpraw(\'wstrzymane\')">Wstrzymane · '+lWstrzym+'</button>' : '')+
     '<button class="chip'+(filtrSpraw==='wszystkie'?' on':'')+'" onclick="ustawFiltrSpraw(\'wszystkie\')">Wszystkie</button></div>';
 
   var nowe = skrz.filter(function(w){ return w.rodzaj !== 'dopisek'; });
@@ -2041,7 +2103,10 @@ function rysujSprawy(){
   var lista = sp.filter(function(s){
     if (filtrSpraw === 'wszystkie') return true;
     if (filtrSpraw === 'rozliczenie') return czyDoRozliczenia(s);
-    return czyWRobocie(s.status);
+    if (filtrSpraw === 'wstrzymane') return czyWstrzymana(s);
+    /* A-18: „W robocie" to lista tego, czym KTOŚ SIĘ TERAZ ZAJMUJE —
+       wstrzymane mają własny chip i tam nie wchodzą. */
+    return czyWRobocie(s.status) && !czyWstrzymana(s);
   });
   lista.sort(function(a,b){
     var pa = dniDo(a.termin), pb = dniDo(b.termin);
@@ -2050,10 +2115,12 @@ function rysujSprawy(){
     return String(b.utworzono||'').localeCompare(String(a.utworzono||''));
   });
   var naglowek = filtrSpraw==='robocie' ? 'W robocie'
-               : filtrSpraw==='rozliczenie' ? 'Do rozliczenia' : 'Wszystkie';
+               : filtrSpraw==='rozliczenie' ? 'Do rozliczenia'
+               : filtrSpraw==='wstrzymane' ? 'Wstrzymane — czekają na kogoś innego' : 'Wszystkie';
   h += '<div class="h">'+naglowek+' · '+lista.length+'</div><div class="karta">';
   if (!lista.length) h += '<div class="pusto">'+
-    (filtrSpraw==='rozliczenie' ? 'Nic nie czeka na fakturę.' : 'Pusto.')+'</div>';
+    (filtrSpraw==='rozliczenie' ? 'Nic nie czeka na fakturę.'
+     : filtrSpraw==='wstrzymane' ? 'Żadna sprawa nie jest wstrzymana.' : 'Pusto.')+'</div>';
   lista.forEach(function(s){ h += kafelSprawy_(s); });
   h += '</div>';
   el('ekranSprawy').innerHTML = h;
@@ -2075,6 +2142,12 @@ function rysujKartaSprawy(){
       '<div class="k">Maszyna</div><div class="v">'+esc(m ? m.nazwa+(m.rejestracja?' · '+m.rejestracja:'') : s.maszyna||'—')+'</div></div>'+
     '<div class="m"><div class="k">Zgłosił</div><div class="v">'+esc(s.zglosil||'—')+' · '+esc(dataPL(s.utworzono))+'</div></div>'+
     '<div class="m"><div class="k">Termin</div><div class="v">'+esc(s.termin ? dataPL(s.termin) : '—')+'</div></div>'+
+    /* A-18: przy wstrzymanej sprawie ważniejsze od terminu jest to, DO KIEDY
+       ma milczeć — inaczej nie wiadomo, czy ktoś o niej jeszcze pamięta. */
+    (s.status === 'Wstrzymane'
+      ? '<div class="m"><div class="k">Wstrzymane do</div><div class="v">'+
+        (s.wstrzymane_do ? esc(dataPL(s.wstrzymane_do)) +
+           (wstrzymanaWrocila(s) ? ' · wróciła' : '') : 'bezterminowo')+'</div></div>' : '')+
     '</div></div>';
   if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
     '<div style="font-size:12.5px; line-height:1.45">'+esc(s.notatki)+'</div></div>';
