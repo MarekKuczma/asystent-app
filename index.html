@@ -1335,7 +1335,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v24';
+var WERSJA_SHELL = 'asystent-v25';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1402,6 +1402,29 @@ function pillStatus(s){
    - `wstrzymane_do` puste → wstrzymane bezterminowo, ale raz w miesiącu
      (1. dnia) mail przypomina JEDNĄ linijką, ile takich spraw leży.
    Sprawa wstrzymana nadal jest „w toku" i widać ją w zakładce Sprawy. */
+/* ===== A-23 (08.09.2026): priorytet „Pilne" =====
+   Sprawa pilna alarmuje OD PIERWSZEGO DNIA, bez czekania na próg. Powstało
+   po tym, jak Z0014 (pierwszy przegląd gwarancyjny CAT-a przy 500 mth) leżało
+   dwa dni robocze i nie pokazało się NIGDZIE — próg dla „Nowe" to 2 dni
+   robocze, a sprawa miała dokładnie 2. Formalnie nic nie zginęło (odezwałaby
+   się nazajutrz), ale próg mierzy BEZCZYNNOŚĆ, a nie pilność: „nowe od 2 dni"
+   i „koparka dobiła do 500 mth" to dwie różne rzeczy.
+   Flaga jest RĘCZNA — stawiam ją przy zapisie sprawy, gdy z treści widać,
+   że coś nie może poczekać (gwarancja, auto stoi, termin urzędowy). */
+function czyPilna(s){ return !!(s && s.pilne); }
+
+/* ===== A-22 (08.09.2026): świeże sprawy =====
+   Druga połowa tej samej lekcji: Puls pokazuje WYŁĄCZNIE to, co przekroczyło
+   próg, więc świeża sprawa jest niewidzialna wszędzie poza zakładką Sprawy.
+   Ta funkcja wybiera sprawy z ostatnich dni, które NIE trafiły do uwag —
+   pokazujemy je spokojną listą, bez plakietek i bez czerwieni. Nie alarm,
+   tylko „to wpadło ostatnio". */
+var DNI_SWIEZE = 7;
+function czySwieza(s){
+  var d = dniOd_(s.utworzono);
+  return d !== null && d <= DNI_SWIEZE;
+}
+
 function czyWstrzymana(s){
   if (!s || s.status !== 'Wstrzymane') return false;
   var d = dniDo(s.wstrzymane_do);
@@ -1768,6 +1791,10 @@ function rysujPuls(){
   /* A-18: sprawy wstrzymane wypadają ze WSZYSTKICH reguł niżej — o to chodzi
      w tym statusie. Wracają osobną regułą 0, gdy minie ich data powrotu. */
   var czynne = wToku.filter(function(s){ return !czyWstrzymana(s); });
+  /* 0a. A-23: PILNE — bez progów, zawsze na samej górze listy. */
+  czynne.forEach(function(s){
+    if (czyPilna(s)) uwaga.push([s, '<span class="pill red">PILNE</span>']);
+  });
   /* 0. wróciła po wstrzymaniu — minęła data, na którą sam ją odłożyłeś */
   wToku.forEach(function(s){
     if (wstrzymanaWrocila(s))
@@ -1862,6 +1889,26 @@ function rysujPuls(){
     if (uwaga.length > 6)
       h += '<div class="fnote">…i jeszcze '+(uwaga.length-6)+' — cała lista w zakładce Sprawy</div>';
     h += '</div>';
+  }
+
+  /* A-22: świeże sprawy, które NIE trafiły do uwag. Osobna karta, bez
+     plakietek — żeby nowa sprawa była widoczna od pierwszego dnia, a nie
+     dopiero wtedy, gdy zacznie się spóźniać. */
+  /* ⚠ Sprawy WYKONANE nie wchodzą do „świeżych", choć wiekiem by pasowały:
+     one już czekają wyłącznie na fakturę i mają swoją spokojną linijkę
+     „Do rozliczenia". Ta sama zasada co przy usuwaniu „Na kogo czekam":
+     jedna rzecz w jednym miejscu, inaczej przy niezgodności nie wiadomo,
+     która lista kłamie. */
+  var swieze = wToku.filter(function(s){
+    return czySwieza(s) && !widziane[s.id] && !czyWstrzymana(s) && s.status !== 'Wykonane';
+  });
+  if (swieze.length){
+    h += '<div class="h">Świeże sprawy · ostatnie '+DNI_SWIEZE+' dni</div><div class="karta">';
+    swieze.slice(0,5).forEach(function(s){ h += kafelSprawy_(s, { status: true }); });
+    if (swieze.length > 5)
+      h += '<div class="fnote">…i jeszcze '+(swieze.length-5)+' — cała lista w zakładce Sprawy</div>';
+    h += '<div class="fnote">Nic z tego nie przekroczyło jeszcze progu przypomnienia — '+
+         'lista jest po to, żeby świeża sprawa nie była niewidzialna.</div></div>';
   }
 
   /* A-20 + A-18: dwie SPOKOJNE linijki pod listą uwag. Nie alarmują, ale nie
@@ -2041,6 +2088,10 @@ function kafelSprawy_(s, opcje){
   var pill = opcje.pill ||
              ((d !== null && d < 0 && wToku) ? '<span class="pill red">po terminie</span>'
            : (d === 0 && wToku) ? '<span class="pill amber">termin dziś</span>' : pillStatus(s.status));
+  /* A-23: sprawa pilna ma być rozpoznawalna TAKŻE na liście spraw, nie tylko
+     na Pulsie — inaczej priorytet żyje w jednym ekranie i nic nie znaczy. */
+  if (czyPilna(s) && wToku && pill.indexOf('PILNE') === -1)
+    pill = '<span class="pill red">PILNE</span>' + pill;
   var klucz, podpis = '', vin = false;
   if (m){
     klucz = kluczMaszyny(m);
