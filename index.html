@@ -828,6 +828,22 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .pill.acc{background:var(--wcisk); color:var(--akcent)}
 .pill.szara{background:var(--wcisk); color:var(--szary)}
 .pusto{text-align:center; color:var(--szary); padding:18px 8px; font-size:12.5px}
+/* A-30 (11.09.2026): spokojna linijka — lżejsza od kafelka, ale niesie maszynę.
+   ⚠ Tekst MUSI się zawijać: to zdanie, nie plakietka (lekcja E-41 i A-26). */
+.linia{display:flex; gap:10px; align-items:baseline; padding:8px 2px;
+   border-top:1px solid var(--linia); font-size:12.5px; line-height:1.4; cursor:pointer}
+.linia:first-child{border-top:none}
+.linia .lw{flex:1; min-width:0}
+.linia .lw i{color:var(--szary); font-style:normal; font-size:11.5px}
+.linia .pr{flex:none; font-size:11px; color:var(--szary); white-space:nowrap}
+.linia .pr b{color:var(--tekst)} .linia .pr b.uw{color:var(--uwaga)}
+/* kropka w kolorze KATEGORII pojazdu — ta sama paleta v93 co ikony wyżej */
+.kropka{display:inline-block; width:8px; height:8px; border-radius:3px; margin-right:7px;
+   vertical-align:1px; background:var(--wcisk)}
+.kropka.k-kop{background:#6AB04C}   .kropka.k-osob{background:#F0932B}
+.kropka.k-ciez{background:#0984E3}  .kropka.k-hds{background:#9B59B6}
+.kropka.k-przycz{background:#FD79A8} .kropka.k-bud{background:#3FA9B4}
+.kropka.k-quad{background:#636E72}  .kropka.k-inne{background:#636E72}
 /* Z-10: kafelek sprawy (wariant C z makiety + nazewnictwo jak w wybieraku:
    klucz = rejestracja/nazwa pogrubione, podpis = marka-model/VIN) */
 .row .g1{display:flex; align-items:center; gap:8px; min-width:0}
@@ -1335,7 +1351,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v25';
+var WERSJA_SHELL = 'asystent-v26';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1459,7 +1475,41 @@ function dniRobocze_(od){
 function dniOd_(od){ var d = dniDo(od); return d === null ? null : -d; }
 /* Progi przypomnień — jedno miejsce do strojenia (cykl życia z notatki
    projektu). Nowe/Wycena w dniach ROBOCZYCH, reszta w kalendarzowych. */
-var PROGI = { nowe: 2, wycena: 3, realizacja: 7, faktura: 7 };
+var PROGI = { nowe: 2, wycena: 3, realizacja: 7, faktura: 21 };
+/* ⚠ A-30 (11.09.2026): `faktura` 7 → 21 dni KALENDARZOWYCH. Od A-20 ten próg
+   nie alarmuje — koloruje tylko napis „czeka na fakturę: N dn." na kafelku.
+   Marek: „po prostu cierpliwie czekamy na faktury". Trzy tygodnie bez papieru
+   to już nie cierpliwość, tylko coś, co utknęło. Kalendarzowe, bo obieg
+   faktury płynie sam, bez niczyjej pracy. */
+/* ===== A-30 (11.09.2026): PROGI OD TEGO, CZYJA PIŁKA =====
+   Reguły do 11.09 pytały „jak długo sprawa stoi w statusie", a Marek potrzebuje
+   odpowiedzi na „czy ruch należy do mnie". Statusy tego nie rozstrzygają:
+   „Umówione" znaczy raz „oni przyjadą, siedź cicho" (Z0005), a raz „ja mam
+   wydusić datę" (Z0014). Dlatego sprawa niesie to wprost w dwóch polach. */
+var PROGI_PILKA = { cisza: 7, ciszaGlosno: 14, bezpiecznik: 14 };
+/* PUSTE „Czekam na" = piłka Marka. ⚠ ZASADA NADRZĘDNA: puste pole wrzuca
+   sprawę na GŁOŚNĄ stronę, nigdy na cichą — niedopatrzenie (moje albo Marka)
+   ma kosztować odrobinę szumu, a nie zgubione zadanie. */
+function pilkaMarka_(s){ return !String((s && s.czekam_na) || '').trim(); }
+function naKogoCzekam_(s){ return String((s && s.czekam_na) || '').trim(); }
+/* Czy nadszedł dzień, w którym sprawa ma się odezwać. Brak daty = od razu. */
+function dojrzala_(s){
+  var d = dniDo(s && s.zajac_sie_od);
+  return d === null || d <= 0;
+}
+/* Ostatni ruch = data ostatniego wpisu w Historii. ⚠ Świadomy kompromis:
+   nasze własne porządki w arkuszu też są wpisem, więc resetują ten licznik.
+   Uznajemy to za poprawne — jeśli ktoś dotykał sprawy, to na nią patrzył.
+   Dlatego licznik ciszy jest tylko SIATKĄ: właściwym mechanizmem przy cudzej
+   piłce jest data „Zająć się od", ustawiana świadomie. */
+function ostatniRuch_(s){
+  var h = (s && s.historia) || [], naj = '';
+  for (var i = 0; i < h.length; i++){
+    var d = String(h[i].data || '');
+    if (d > naj) naj = d;      /* ISO — porównanie tekstowe = porównanie dat */
+  }
+  return dniRobocze_(naj || (s && s.status_od));
+}
 /* A-04t (31.08.2026): terminy flotowe. `wyprzedzenie` — ile dni przed
    wygaśnięciem zaczynamy przypominać (Marek: 14). `stare` — powyżej ilu dni
    PO terminie przestajemy traktować datę jak alarm i uznajemy ją za brud
@@ -1820,32 +1870,57 @@ function rysujPuls(){
      spraw do rozliczenia idzie SPOKOJNĄ linijką pod listą uwag, a pełna lista
      żyje w zakładce Sprawy → chip „Do rozliczenia". Numer faktury wpisuje się
      tak czy owak, a docelowo ma go podpowiadać zestawienie kosztów (A-21). */
-  /* 4. wisi w realizacji */
+  /* ===== A-30 (11.09.2026): reguły 4-7 ZASTĄPIONE przez piłkę =====
+     Stare reguły („w realizacji N dn.", „brak wyceny", „Umówione bez terminu",
+     „nowe od N dn. rob.") pytały o status. Efekt zmierzony 11.09 na żywych
+     danych: Develon — gdzie czekamy na CUDZY telefon — stał NAD Fordem, którego
+     Marek ma umówić, a Ford Pejsa nie mieścił się w progu i nie było go wcale.
+     Wszystkie cztery sytuacje mieszczą się teraz w jednym pytaniu: czyja piłka.
+     ⚠ Sprawy czekające na fakturę mają własną, SPOKOJNĄ sekcję (A-20) i tu
+     nie wchodzą. Wstrzymane wypadły wcześniej, razem z `czynne`. */
+  var juzWUwagach = {};
+  uwaga.forEach(function(p){ juzWUwagach[p[0].id] = true; });
+  var zaplanowane = [], czekamyNaNich = [];
   czynne.forEach(function(s){
-    if (s.status !== 'W realizacji') return;
-    var d = dniOd_(s.status_od);
-    if (d !== null && d > PROGI.realizacja)
-      uwaga.push([s, '<span class="pill amber">w serwisie '+d+' dn.</span>']);
+    if (juzWUwagach[s.id] || czyDoRozliczenia(s)) return;
+    var ruch = ostatniRuch_(s);
+    if (pilkaMarka_(s)){
+      /* 4. PIŁKA MARKA. Z datą — odzywa się w dniu, który sam wskazał.
+         Bez daty — po progu bezczynności (2 dni robocze, jak dawniej „Nowe"). */
+      if (!dojrzala_(s)) { zaplanowane.push(s); return; }
+      if (s.zajac_sie_od || (ruch !== null && ruch > PROGI.nowe))
+        uwaga.push([s, '<span class="pill acc">na Twoje biurko</span>']);
+      else zaplanowane.push(s);
+      return;
+    }
+    /* 5. PIŁKA ICH. Data „Zająć się od" znaczy tu „wtedy dopytaj". */
+    if (s.zajac_sie_od && dojrzala_(s)){
+      uwaga.push([s, '<span class="pill amber">dopytaj — '+esc(naKogoCzekam_(s))+'</span>']);
+      return;
+    }
+    /* 6. Bez daty zostaje SIATKA po dniach ciszy — żeby brak daty nie
+       oznaczał ciszy na zawsze. Powyżej drugiego progu robi się czerwono. */
+    if (!s.zajac_sie_od && ruch !== null && ruch > PROGI_PILKA.ciszaGlosno){
+      uwaga.push([s, '<span class="pill red">'+ruch+' dni ciszy — dopytaj</span>']);
+      return;
+    }
+    if (!s.zajac_sie_od && ruch !== null && ruch > PROGI_PILKA.cisza){
+      uwaga.push([s, '<span class="pill amber">'+ruch+' dni ciszy</span>']);
+      return;
+    }
+    czekamyNaNich.push(s);
   });
-  /* 5. brak wyceny */
-  czynne.forEach(function(s){
-    if (s.status !== 'Wycena') return;
-    var d = dniRobocze_(s.status_od);
-    if (d !== null && d > PROGI.wycena)
-      uwaga.push([s, '<span class="pill acc">brak wyceny '+d+' dn. rob.</span>']);
-  });
-  /* 6. Umówione bez terminu — luka w danych: status mówi „termin ustalony",
-     a pola Termin nie ma, więc nic tej sprawy nie przypilnuje */
-  czynne.forEach(function(s){
-    if (s.status === 'Umówione' && !s.termin)
-      uwaga.push([s, '<span class="pill amber">brak terminu</span>']);
-  });
-  /* 7. Nowe leży bez ruchu */
-  czynne.forEach(function(s){
-    if (s.status !== 'Nowe') return;
-    var d = dniRobocze_(s.status_od || s.utworzono);
-    if (d !== null && d > PROGI.nowe)
-      uwaga.push([s, '<span class="pill acc">nowe od '+d+' dn. rob.</span>']);
+  /* 7. BEZPIECZNIK — ostatnia siatka, niezależna od pól. Jeśli w sprawie nie
+     drgnęło NIC przez PROGI_PILKA.bezpiecznik dni roboczych, wraca na wierzch
+     nawet wtedy, gdy „Czekam na" i „Zająć się od" mówią co innego. Po to, żeby
+     zaniedbanie pól nie było w stanie schować sprawy na zawsze. */
+  czekamyNaNich = czekamyNaNich.filter(function(s){
+    var ruch = ostatniRuch_(s);
+    if (ruch !== null && ruch > PROGI_PILKA.bezpiecznik){
+      uwaga.push([s, '<span class="pill red">'+ruch+' dni bez ruchu</span>']);
+      return false;
+    }
+    return true;
   });
   var widziane = {};
   uwaga = uwaga.filter(function(p){ if(widziane[p[0].id]) return false; widziane[p[0].id]=true; return true; });
@@ -1891,37 +1966,70 @@ function rysujPuls(){
     h += '</div>';
   }
 
-  /* A-22: świeże sprawy, które NIE trafiły do uwag. Osobna karta, bez
-     plakietek — żeby nowa sprawa była widoczna od pierwszego dnia, a nie
-     dopiero wtedy, gdy zacznie się spóźniać. */
-  /* ⚠ Sprawy WYKONANE nie wchodzą do „świeżych", choć wiekiem by pasowały:
-     one już czekają wyłącznie na fakturę i mają swoją spokojną linijkę
-     „Do rozliczenia". Ta sama zasada co przy usuwaniu „Na kogo czekam":
-     jedna rzecz w jednym miejscu, inaczej przy niezgodności nie wiadomo,
-     która lista kłamie. */
-  var swieze = wToku.filter(function(s){
-    return czySwieza(s) && !widziane[s.id] && !czyWstrzymana(s) && s.status !== 'Wykonane';
-  });
-  if (swieze.length){
-    h += '<div class="h">Świeże sprawy · ostatnie '+DNI_SWIEZE+' dni</div><div class="karta">';
-    swieze.slice(0,5).forEach(function(s){ h += kafelSprawy_(s, { status: true }); });
-    if (swieze.length > 5)
-      h += '<div class="fnote">…i jeszcze '+(swieze.length-5)+' — cała lista w zakładce Sprawy</div>';
-    h += '<div class="fnote">Nic z tego nie przekroczyło jeszcze progu przypomnienia — '+
-         'lista jest po to, żeby świeża sprawa nie była niewidzialna.</div></div>';
+  /* ===== A-30 (11.09.2026): trzy SPOKOJNE sekcje pod listą uwag =====
+     ⚠ Sekcja „Świeże sprawy · 7 dni" (A-22) ZNIKA — i to nie jest cofnięcie
+     tamtej decyzji, tylko jej domknięcie. A-22 powstało, bo świeża sprawa była
+     niewidzialna, dopóki nie przekroczyła progu. Teraz niewidzialna być nie
+     może: sprawa z piłką Marka stoi albo w uwagach, albo w „Zaplanowane”,
+     a sprawa z piłką cudzą w „Czekamy na innych”. Trzymanie obu list naraz
+     dawało te same kafelki dwa razy — Marek zgłosił to 11.09. */
+
+  /* 1. ZAPLANOWANE — Twoje, ale jeszcze nie dziś. Bez tej sekcji data „Zająć
+     się od" UKRYWAŁABY sprawę do swojego dnia, a Marek: „muszę pamiętać to
+     zrobić". Widać je, tylko nie krzyczą. */
+  if (zaplanowane.length){
+    h += '<div class="h">Zaplanowane — Twoje, ale nie dziś</div><div class="karta">';
+    zaplanowane.sort(function(a,b){
+      return String(a.zajac_sie_od||'9').localeCompare(String(b.zajac_sie_od||'9')); });
+    zaplanowane.forEach(function(s){
+      h += linijkaSprawy_(s, 'od <b>'+(s.zajac_sie_od ? esc(dataKrotka_(s.zajac_sie_od)) : 'jutra')+'</b>');
+    });
+    h += '</div>';
   }
 
-  /* A-20 + A-18: dwie SPOKOJNE linijki pod listą uwag. Nie alarmują, ale nie
-     dają też zniknąć po cichu — obie rzeczy widać, żadna nie krzyczy. */
+  /* 2. CZEKAMY NA INNYCH — decyzja Marka 11.09: niżej i spokojnie, ale
+     z licznikiem, bo to odróżnia „czekamy" od „zapomnieli o nas". */
+  if (czekamyNaNich.length){
+    h += '<div class="h">Czekamy na innych</div><div class="karta">';
+    czekamyNaNich.sort(function(a,b){ return (ostatniRuch_(b)||0) - (ostatniRuch_(a)||0); });
+    czekamyNaNich.forEach(function(s){
+      var ruch = ostatniRuch_(s);
+      var prawa = s.zajac_sie_od ? 'dopytaj <b>'+esc(dataKrotka_(s.zajac_sie_od))+'</b>'
+                : (ruch === null ? '' : ruch+' dn. ciszy');
+      h += linijkaSprawy_(s, prawa, '<i> · czekam na: '+esc(naKogoCzekam_(s))+'</i>');
+    });
+    h += '</div>';
+  }
+
+  /* 3. DO ROZLICZENIA — A-20 zostaje w mocy: faktury NIE alarmują. Ale mają
+     być widoczne z liczbą dni, żeby „cierpliwie czekamy" nie zamieniło się
+     w „zapomnieliśmy". Czerwienieje dopiero po PROGI.faktura (21 dni). */
+  if (doRozliczenia.length){
+    h += '<div class="h">Do rozliczenia — czekają na fakturę</div><div class="karta">';
+    doRozliczenia.sort(function(a,b){ return (dniOd_(b.status_od)||0) - (dniOd_(a.status_od)||0); });
+    doRozliczenia.forEach(function(s){
+      var d = dniOd_(s.status_od);
+      h += linijkaSprawy_(s, d === null ? '' :
+        '<b'+(d > PROGI.faktura ? ' class="uw"' : '')+'>'+d+' dni</b>');
+    });
+    h += '</div>';
+  }
+
+  /* 4. WSTRZYMANE — jedna zwinięta linijka (A-18: przypominają się raz
+     w miesiącu). Nie znikają z oczu, ale nie zabierają miejsca. */
   var wstrzymane = sp.filter(czyWstrzymana);
-  if (doRozliczenia.length || wstrzymane.length){
-    var cz = [];
-    if (doRozliczenia.length)
-      cz.push('<button class="przycisk-link" onclick="ustawFiltrSpraw(\'rozliczenie\');pokaz(\'sprawy\')">Do rozliczenia: '+
-        doRozliczenia.length+'</button>');
-    if (wstrzymane.length)
-      cz.push('Wstrzymane: '+wstrzymane.length);
-    h += '<div class="fnote" style="margin-top:-4px">'+cz.join(' &nbsp;·&nbsp; ')+'</div>';
+  if (wstrzymane.length){
+    h += '<div class="karta">'+
+      '<div class="linia" onclick="przelaczWstrzymane()"><span class="lw"><b>'+
+      wstrzymane.length+'</b> '+odmianaWstrzymanych_(wstrzymane.length)+
+      ' bezterminowo — przypomną się raz w miesiącu</span>'+
+      '<span class="pr" style="color:var(--akcent);font-weight:700">'+
+      (wstrzymaneOtwarte ? 'ukryj' : 'pokaż')+'</span></div>';
+    if (wstrzymaneOtwarte)
+      wstrzymane.forEach(function(s){
+        h += linijkaSprawy_(s, '', '<i> · czeka na: '+esc(naKogoCzekam_(s) || 'nieustalone')+'</i>');
+      });
+    h += '</div>';
   }
 
   /* A-04t: OSOBNA sekcja (wariant C) — terminy to nie to samo co sprawy
@@ -1957,6 +2065,19 @@ function rysujPuls(){
   h += '<div class="stopka-wersji" id="stopkaWersji"></div>';
   el('ekranPuls').innerHTML = h;
   pokazWersje();
+}
+/* A-30 (11.09.2026): spokojna linijka zamiast kafelka — dla rzeczy, które mają
+   być WIDOCZNE, ale nie mają wołać. ⚠ Zawsze zaczyna się od maszyny: tytuł po
+   A-25 celowo jej nie powtarza (bo kafelek ją pokazuje), więc każde miejsce
+   drukujące SAM tytuł maszynę gubi. Marek złapał to na makiecie A-30. */
+function linijkaSprawy_(s, prawa, dopisek){
+  var m = maszynaSprawy(s);
+  var klucz = m ? kluczMaszyny(m) : (s.maszyna || 'maszyna nieznana');
+  var kod = m ? kodRodzaju(m.rodzaj) : 'inne';
+  return '<div class="linia" onclick="otworzSprawe(\''+s.id+'\')">'+
+    '<span class="lw"><span class="kropka k-'+kod+'"></span><b>'+esc(klucz)+'</b> · '+
+    esc(s.tytul||'')+(dopisek||'')+'</span>'+
+    '<span class="pr">'+(prawa||'')+'</span></div>';
 }
 function maszynaSprawy(s){
   if (!dane || !s.id_pojazdu) return null;
@@ -2123,6 +2244,14 @@ function kafelSprawy_(s, opcje){
 }
 /* Z-11: trzy filtry zamiast dwóch. „W toku" mieszało robotę z czekaniem
    na fakturę — teraz stan widać z samego filtra. */
+/* A-30: zwinięta lista wstrzymanych na Pulsie */
+var wstrzymaneOtwarte = false;
+function przelaczWstrzymane(){ wstrzymaneOtwarte = !wstrzymaneOtwarte; rysujPuls(); }
+function odmianaWstrzymanych_(n){
+  if (n === 1) return 'sprawa wstrzymana';
+  var d = n % 10, s = n % 100;
+  return (d >= 2 && d <= 4 && (s < 12 || s > 14)) ? 'sprawy wstrzymane' : 'spraw wstrzymanych';
+}
 var filtrSpraw = 'robocie';
 function rysujSprawy(){
   if (!dane) return;
