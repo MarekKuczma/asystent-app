@@ -1351,7 +1351,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v26';
+var WERSJA_SHELL = 'asystent-v27';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1766,10 +1766,14 @@ function wyczyscOdrzucone(){
 }
 
 function wierszSkrzynki_(w, prawa, klasa){
+  /* A-28 (11.09.2026): numer wpisu na poczatku drugiej linijki. Powod z zycia:
+     Marek mial odrzucic S0005 i S0007 i nie wiedzial, ktory wiersz to ktory —
+     ten sam wpis w zakladce „Wpisy" numer pokazuje, a tu nie pokazywal. */
+  var nr = w.s_id ? '<b>'+esc(w.s_id)+'</b> · ' : '';
   return '<div class="row'+(klasa||'')+'" style="cursor:default"><div class="ic">'+I.sprawy+'</div>'+
     '<div class="mid"><div class="t1">'+
     esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+
-    '</div><div class="t2">'+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+
+    '</div><div class="t2">'+nr+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+
     esc((w.tresc||'').slice(0,70))+'…</div></div>'+prawa+'</div>';
 }
 
@@ -1805,7 +1809,7 @@ function skrzynkaHTML(skrz){
       odrz.forEach(function(w){
         var wroc = '<button class="sk-btn" onclick="cofnijOdrzucenie(\''+esc(w.s_id)+'\')">'+
                    I.odswiez+'Wróć do kolejki</button>';
-        var kopia = { rodzaj:w.rodzaj, dotyczy:w.dotyczy, maszyna:w.maszyna,
+        var kopia = { s_id:w.s_id, rodzaj:w.rodzaj, dotyczy:w.dotyczy, maszyna:w.maszyna,
                       kto:'odrzucone '+(w.odrzucono||'—'), utworzono:(w.powod||''), tresc:w.tresc };
         h += wierszSkrzynki_(kopia, wroc, ' sk-szary');
       });
@@ -2274,7 +2278,7 @@ function rysujSprawy(){
     nowe.forEach(function(w){
       h += '<div class="row" style="cursor:default"><div class="ic">'+I.sprawy+'</div><div class="mid">'+
         '<div class="t1">'+esc(w.maszyna||'Zgłoszenie')+(w.typ?' · '+esc(w.typ):'')+'</div>'+
-        '<div class="t2">'+esc(w.s_id)+' · '+esc(w.kto||'')+' · '+esc((w.tresc||'').slice(0,80))+'</div></div>'+
+        '<div class="t2"><b>'+esc(w.s_id)+'</b> · '+esc(w.kto||'')+' · '+esc((w.tresc||'').slice(0,80))+'</div></div>'+
         '<span class="pill amber">czeka</span></div>';
     });
     h += '<div class="fnote">status nada się przy przetwarzaniu — statusy wynikają z treści</div></div>';
