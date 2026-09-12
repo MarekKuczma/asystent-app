@@ -940,6 +940,16 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    sklejal sie w jeden blok tekstu i Marek nie znajdowal w nim „co zostalo". */
 .notatka{font-size:12.5px; line-height:1.55; white-space:pre-line}
 .notatka b{color:var(--tekst)}
+/* A-27 (12.09.2026): „Twoimi slowami" — opis zgloszenia i WSZYSTKIE pozniejsze
+   doslowne dopiski w jednym miejscu. Skarga Marka nr 2 z 11.09: „opis doslownie
+   jak podano, jest tylko jeden wpis? czemu ma sluzyc?" — bo dopisek o przegladzie
+   1000 mth siedzial wylacznie w Historii. Zasada „opis surowy nietykalny" BEZ
+   ZMIAN (A-15): to inny WIDOK tego, co juz jest w bazie, nic sie nie przepisuje. */
+.tw{margin:0 0 11px}
+.tw:last-of-type{margin-bottom:0}
+.tw .twd{font-size:10px; color:var(--szary); margin:0 0 3px 14px}
+.tw.pierwsze .twd{color:var(--akcent); font-weight:700}
+#twGuzik{margin:3px 0 13px}
 
 /* koszty: 3 przekroje */
 .seg{display:flex; background:var(--wcisk); border-radius:12px; padding:3px; margin:10px 0}
@@ -1364,7 +1374,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v28';
+var WERSJA_SHELL = 'asystent-v29';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -2348,7 +2358,39 @@ function rysujKartaSprawy(){
     '</div></div>';
   if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
     '<div class="notatka">'+notatkaHTML_(s.notatki)+'</div></div>';
-  h += '<div class="h">Opis — dosłownie, jak podano</div><div class="karta"><p class="surowy">'+esc(s.opis||'')+'</p></div>';
+  /* A-27: slowa Marka w kolejnosci, w jakiej padly. Wpis „utworzenie" pomijamy —
+     jego `tresc` to dokladnie `opis`, ktory stoi jako pierwszy. */
+  var slowa = [];
+  if (s.opis) slowa.push({ data: s.utworzono, tekst: s.opis, pierwsze: true });
+  (s.historia || []).forEach(function(w){
+    if (w.typ === 'utworzenie' || !w.tresc) return;
+    slowa.push({ data: w.data, kto: w.kto, tekst: w.tresc });
+  });
+  function twHTML_(x){
+    return '<div class="tw'+(x.pierwsze ? ' pierwsze' : '')+'">'+
+      '<div class="twd">'+esc(czasPL(x.data))+(x.pierwsze ? ' · zgłoszenie' : '')+
+      (x.ostatnie ? ' · ostatnie' : '')+
+      (x.kto && x.kto !== 'Marek' ? ' · '+esc(x.kto) : '')+'</div>'+
+      '<p class="surowy">'+esc(x.tekst)+'</p></div>';
+  }
+  /* Zawsze widac PIERWSZE (zgloszenie) i NAJNOWSZE zdanie — to odpowiedzi na
+     „od czego sie zaczelo" i „co ostatnio powiedzialem". Srodek zwija sie, ale
+     tylko gdy jest czego zwijac: przy PROG_TW wypowiedziach i mniej pokazujemy
+     wszystko i guzika nie ma wcale. Wybor Marka 12.09 (mix wariantow 2 i 3
+     z makiety); goly wariant 2 chowal ostatnia wypowiedz, czyli zwykle
+     najbardziej aktualna. PROG_TW = jedna liczba do strojenia. */
+  var PROG_TW = 3;
+  var srodek = slowa.length > PROG_TW ? slowa.slice(1, -1) : [];
+  var jawne  = slowa.length > PROG_TW ? [slowa[0]] : slowa.slice();
+  h += '<div class="h">Twoimi słowami · '+slowa.length+'</div><div class="karta">'+
+    jawne.map(twHTML_).join('')+
+    (srodek.length
+      ? '<div id="twReszta" class="ukryte">'+srodek.map(twHTML_).join('')+'</div>'+
+        '<button class="sk-btn" id="twGuzik" onclick="przelaczTw()">pokaż '+srodek.length+' ze środka</button>'+
+        twHTML_(Object.assign({ ostatnie:true }, slowa[slowa.length-1]))
+      : '')+
+    '<div class="fnote">Dosłownie, jak podano — tych słów appka nigdy nie przepisuje. '+
+    'Co z nich wynika, jest w Notatce wyżej.</div></div>';
 
   var czekajace = (dane.skrzynka||[]).filter(function(w){ return w.rodzaj==='dopisek' && w.dotyczy===s.id; });
   h += '<div class="h">Historia</div><div class="karta"><div class="tl">';
@@ -2358,8 +2400,13 @@ function rysujKartaSprawy(){
   });
   (s.historia||[]).slice().reverse().forEach(function(w){
     h += '<div class="te'+(w.typ==='utworzenie'?'':' ')+'"><div class="td">'+esc(czasPL(w.data))+' · '+esc(w.kto||'')+
-      ' · '+esc(w.typ||'')+'</div><div class="tx">'+esc(w.typ==='utworzenie' ? 'utworzenie sprawy — pełna treść wyżej, w „Opis"' : (w.tresc||''))+
-      (w.zmiana ? '<span class="zm">'+esc(w.zmiana)+'</span>' : '')+'</div></div>';
+      ' · '+esc(w.typ||'')+'</div><div class="tx">'+
+      /* A-27: Historia przestaje POWTARZAC doslowne slowa — stoja w calosci
+         w „Twoimi slowami" wyzej. Tu zostaje sama odpowiedz na „co sie zmienilo
+         i kiedy", zeby ta sama tresc nie stala dwa razy obok siebie na jednym
+         ekranie. Gdy wpis nie ma opisu zmiany, pokazujemy tresc — nic nie ginie. */
+      (w.zmiana ? '<span class="zm" style="margin-top:0">'+esc(w.zmiana)+'</span>'
+                : esc(w.tresc||''))+'</div></div>';
   });
   h += '</div></div>';
 
@@ -2381,6 +2428,15 @@ function notatkaHTML_(t){
     return l.replace(/^(\s*(?:⚠\s*)?[A-ZĄĆĘŁŃÓŚŹŻ][A-ZĄĆĘŁŃÓŚŹŻ0-9 ,\/\-]{1,32}:)/,
                      function(m){ return '<b>'+m+'</b>'; });
   }).join('\n');
+}
+
+
+/* A-27: zwijanie srodka „Twoimi slowami". Guzik zawsze mowi, ILE jest schowane. */
+function przelaczTw(){
+  var r = el('twReszta'), g = el('twGuzik');
+  if (!r) return;
+  var schowane = r.classList.toggle('ukryte');
+  g.textContent = schowane ? 'pokaż '+r.children.length+' ze środka' : 'zwiń środek';
 }
 
 /* ---------- KOSZTY ---------- */
