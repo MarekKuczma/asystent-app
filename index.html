@@ -940,6 +940,10 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    sklejal sie w jeden blok tekstu i Marek nie znajdowal w nim „co zostalo". */
 .notatka{font-size:12.5px; line-height:1.55; white-space:pre-line}
 .notatka b{color:var(--tekst)}
+/* A-33: rozwinięta treść wpisu ze Skrzynki — łamie linie tak, jak ją Marek
+   podyktował, i nie jest już przycięta w połowie zdania. */
+.row .t2.wp-cala{white-space:pre-line}
+.wp-wiecej{color:var(--akcent); font-weight:700; margin-left:6px; white-space:nowrap}
 /* A-27 (12.09.2026): „Twoimi slowami" — opis zgloszenia i WSZYSTKIE pozniejsze
    doslowne dopiski w jednym miejscu. Skarga Marka nr 2 z 11.09: „opis doslownie
    jak podano, jest tylko jeden wpis? czemu ma sluzyc?" — bo dopisek o przegladzie
@@ -1374,7 +1378,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v30';
+var WERSJA_SHELL = 'asystent-v31';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1788,16 +1792,46 @@ function wyczyscOdrzucone(){
                 'Lista odrzuconych wyczyszczona (wpisy zostają w arkuszu).');
 }
 
+/* A-33 (12.09.2026): ile znaków treści widać w zwiniętym wierszu. Jedna liczba
+   do strojenia. */
+var PROG_WPISU = 70;
+/* A-33: które wpisy Marek rozwinął. Stan w pamięci — po odświeżeniu Puls
+   wygląda tak samo jak rano. */
+var otwarteWpisy = {};
+function przelaczWpis(sid){ otwarteWpisy[sid] = !otwarteWpisy[sid]; rysujPuls(); }
+
 function wierszSkrzynki_(w, prawa, klasa){
   /* A-28 (11.09.2026): numer wpisu na poczatku drugiej linijki. Powod z zycia:
      Marek mial odrzucic S0005 i S0007 i nie wiedzial, ktory wiersz to ktory —
      ten sam wpis w zakladce „Wpisy" numer pokazuje, a tu nie pokazywal. */
   var nr = w.s_id ? '<b>'+esc(w.s_id)+'</b> · ' : '';
+  /* A-33 (12.09.2026): wpis rozwija sie POJEDYNCZO. Marek dyktuje dlugie
+     wiadomosci, wiec urwana w polowie zdania tresc znaczyla, ze i tak trzeba
+     isc do zakladki „Wpisy", zeby ja doczytac. Teraz cala tresc jest tapniecie
+     dalej, a wiersz domyslnie zostaje jedna linijka.
+     ⚠ Zwijamy TYLKO to, co naprawde jest dluzsze — krotki wpis nie dostaje
+     guzika, ktory nic nie robi. */
+  var tresc = String(w.tresc || '');
+  var dlugi = tresc.length > PROG_WPISU;
+  var otw = dlugi && !!otwarteWpisy[w.s_id];
+  /* Ucinamy na GRANICY SLOWA, nie w srodku wyrazu — inaczej „t…więcej" wyglada
+     jak literowka, a nie jak urwane zdanie. */
+  var skrot = tresc.slice(0, PROG_WPISU);
+  if (dlugi){
+    var spacja = skrot.lastIndexOf(' ');
+    if (spacja > PROG_WPISU - 18) skrot = skrot.slice(0, spacja);
+  }
+  var widoczna = otw ? tresc : skrot + (dlugi ? '… ' : '');
+  var guzik = dlugi
+    ? '<span class="wp-wiecej">'+(otw ? 'zwiń' : 'więcej')+'</span>' : '';
+  /* Klik lapiemy na SRODKU wiersza, nie na calym: po prawej stoi krzyzyk
+     „Odrzuc" albo „Wroc do kolejki" i te maja swoje wlasne zadanie. */
+  var klik = dlugi ? ' style="cursor:pointer" onclick="przelaczWpis(\''+esc(w.s_id)+'\')"' : '';
   return '<div class="row'+(klasa||'')+'" style="cursor:default"><div class="ic">'+I.sprawy+'</div>'+
-    '<div class="mid"><div class="t1">'+
+    '<div class="mid"'+klik+'><div class="t1">'+
     esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+
-    '</div><div class="t2">'+nr+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+
-    esc((w.tresc||'').slice(0,70))+'…</div></div>'+prawa+'</div>';
+    '</div><div class="t2'+(otw ? ' wp-cala' : '')+'">'+nr+esc((w.kto||'')+' · '+(w.utworzono||''))+' · '+
+    esc(widoczna)+guzik+'</div></div>'+prawa+'</div>';
 }
 
 function skrzynkaHTML(skrz){
