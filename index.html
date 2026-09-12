@@ -1374,7 +1374,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v29';
+var WERSJA_SHELL = 'asystent-v30';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1858,7 +1858,6 @@ function rysujPuls(){
   var wToku = sp.filter(function(s){ return czyWToku(s.status); });
   var poTerminie = wToku.filter(function(s){ var d = dniDo(s.termin); return d !== null && d < 0; });
   var terminDzis = wToku.filter(function(s){ return dniDo(s.termin) === 0; });
-  var wSerwisie = wToku.filter(function(s){ return s.status === 'W realizacji'; });
 
   /* ===== Z-11: STRAŻNIK (A-04) — komplet reguł z cyklu życia w notatce
      projektu. Kolejność dopisywania = priorytet: pierwsza pasująca reguła
@@ -1888,8 +1887,15 @@ function rysujPuls(){
   poTerminie.filter(pilnujeTerminu)
     .forEach(function(s){ uwaga.push([s, '<span class="pill red">po terminie '+(-dniDo(s.termin))+' dn.</span>']); });
   /* 2. termin dziś */
+  /* A-32 (12.09.2026): przy terminie z godziną plakietka ją pokazuje. Ta reguła
+     jest teraz WAŻNIEJSZA niż wcześniej: od 12.09 sprawa umówiona ma piłkę po
+     stronie KIEROWCY (Marek: „ja swoją pracę wykonałem, umówiłem"), więc na co
+     dzień siedzi cicho w „Czekamy na innych". W dniu wizyty ta reguła wyciąga
+     ją na wierzch — bo jak kierowca nie pojedzie, dowie się o tym Marek. */
   terminDzis.filter(pilnujeTerminu)
-    .forEach(function(s){ uwaga.push([s, '<span class="pill amber">termin DZIŚ</span>']); });
+    .forEach(function(s){
+      var g = String(s.termin||'').slice(11,16);
+      uwaga.push([s, '<span class="pill amber">termin DZIŚ'+(g ? ' ' + g : '')+'</span>']); });
   /* 3. ⛔ REGUŁA USUNIĘTA 08.09.2026 (A-20) — „Wykonane bez faktury".
      Marek: „statusy, że coś czeka na fakturę, to sprawa drugorzędna i nie
      trzeba o tym pamiętać — faktura trafi tak czy tak". Alarm o tym zabierał
@@ -2001,62 +2007,79 @@ function rysujPuls(){
      a sprawa z piłką cudzą w „Czekamy na innych”. Trzymanie obu list naraz
      dawało te same kafelki dwa razy — Marek zgłosił to 11.09. */
 
-  /* 1. ZAPLANOWANE — Twoje, ale jeszcze nie dziś. Bez tej sekcji data „Zająć
-     się od" UKRYWAŁABY sprawę do swojego dnia, a Marek: „muszę pamiętać to
-     zrobić". Widać je, tylko nie krzyczą. */
+  /* ===== A-32 (12.09.2026): CO JEST ROZWINIĘTE, DECYDUJE PIŁKA =====
+     Zmierzone 12.09 na żywych danych: Puls miał 7 sekcji i 1753 px, czyli
+     2,1 ekranu telefonu — a 60% tej wysokości zajmowały sprawy, przy których
+     Marek NIE MA żadnego ruchu (czekanie na innych, na faktury). Sekcja
+     odpowiadająca na „co mam dziś zrobić" dostawała 8%.
+     ⚠ ZASADA MARKA (12.09): „sprawy, które ja muszę wykonać, to na pewno
+     rozwinięte". Zwijamy WYŁĄCZNIE to, przy czym piłka jest po cudzej stronie.
+     Wzór nie jest nowy — wstrzymane siedzą w jednej linijce od A-18.
+     Nic nie ginie: każda linijka rozwija się tapnięciem, a strażnik o 8:00
+     wymienia wszystko tak czy owak. */
+
+  /* 1. TWOJE — piłka Marka, ale dzień jeszcze nie nadszedł. ZAWSZE ROZWINIĘTE.
+     To poczekalnia sekcji „Dziś wymaga uwagi”: w dniu z pola „Zająć się od”
+     sprawa sama przechodzi wyżej, nic nie trzeba klikać. */
   if (zaplanowane.length){
-    h += '<div class="h">Zaplanowane — Twoje, ale nie dziś</div><div class="karta">';
     zaplanowane.sort(function(a,b){
       return String(a.zajac_sie_od||'9').localeCompare(String(b.zajac_sie_od||'9')); });
+    h += '<div class="h">Twoje — do zrobienia, ale nie dziś</div><div class="karta">';
     zaplanowane.forEach(function(s){
       h += linijkaSprawy_(s, 'od <b>'+(s.zajac_sie_od ? esc(dataKrotka_(s.zajac_sie_od)) : 'jutra')+'</b>');
     });
     h += '</div>';
   }
 
-  /* 2. CZEKAMY NA INNYCH — decyzja Marka 11.09: niżej i spokojnie, ale
-     z licznikiem, bo to odróżnia „czekamy" od „zapomnieli o nas". */
+  /* 2. SPOKOJNE — po jednej zwiniętej linijce na grupę. Linijka niesie liczbę
+     i to, co z grupy najważniejsze, żeby dało się ją zignorować świadomie,
+     a nie z niewiedzy. */
+  var spokojne = [];
   if (czekamyNaNich.length){
-    h += '<div class="h">Czekamy na innych</div><div class="karta">';
-    czekamyNaNich.sort(function(a,b){ return (ostatniRuch_(b)||0) - (ostatniRuch_(a)||0); });
-    czekamyNaNich.forEach(function(s){
-      var ruch = ostatniRuch_(s);
-      var prawa = s.zajac_sie_od ? 'dopytaj <b>'+esc(dataKrotka_(s.zajac_sie_od))+'</b>'
-                : (ruch === null ? '' : ruch+' dn. ciszy');
-      h += linijkaSprawy_(s, prawa, '<i> · czekam na: '+esc(naKogoCzekam_(s))+'</i>');
-    });
-    h += '</div>';
+    czekamyNaNich.sort(function(a,b){
+      return String(a.zajac_sie_od||'9').localeCompare(String(b.zajac_sie_od||'9')); });
+    var najbl = czekamyNaNich.filter(function(s){ return s.zajac_sie_od; })[0];
+    spokojne.push({ klucz:'czekamy', ile:czekamyNaNich.length,
+      opis: (czekamyNaNich.length===1?'czeka':'czekają')+' na innych'+
+            (najbl ? ' — dopytaj <b>'+esc(dataKrotka_(najbl.zajac_sie_od))+'</b>' : ''),
+      rysuj: function(){ return czekamyNaNich.map(function(s){
+        var ruch = ostatniRuch_(s);
+        var prawa = s.zajac_sie_od ? 'dopytaj <b>'+esc(dataKrotka_(s.zajac_sie_od))+'</b>'
+                  : (ruch === null ? '' : ruch+' dn. ciszy');
+        return linijkaSprawy_(s, prawa, '<i> · czekam na: '+esc(naKogoCzekam_(s))+'</i>');
+      }).join(''); } });
   }
-
-  /* 3. DO ROZLICZENIA — A-20 zostaje w mocy: faktury NIE alarmują. Ale mają
-     być widoczne z liczbą dni, żeby „cierpliwie czekamy" nie zamieniło się
-     w „zapomnieliśmy". Czerwienieje dopiero po PROGI.faktura (21 dni). */
   if (doRozliczenia.length){
-    h += '<div class="h">Do rozliczenia — czekają na fakturę</div><div class="karta">';
     doRozliczenia.sort(function(a,b){ return (dniOd_(b.status_od)||0) - (dniOd_(a.status_od)||0); });
-    doRozliczenia.forEach(function(s){
-      var d = dniOd_(s.status_od);
-      h += linijkaSprawy_(s, d === null ? '' :
-        '<b'+(d > PROGI.faktura ? ' class="uw"' : '')+'>'+d+' dni</b>');
-    });
-    h += '</div>';
+    var najdl = dniOd_(doRozliczenia[0].status_od);
+    spokojne.push({ klucz:'faktury', ile:doRozliczenia.length,
+      opis: (doRozliczenia.length===1?'czeka':'czekają')+' na fakturę'+
+            (najdl === null ? '' : ' — najdłużej <b'+(najdl > PROGI.faktura ? ' class="uw"' : '')+'>'+najdl+' dni</b>'),
+      rysuj: function(){ return doRozliczenia.map(function(s){
+        var d = dniOd_(s.status_od);
+        return linijkaSprawy_(s, d === null ? '' :
+          '<b'+(d > PROGI.faktura ? ' class="uw"' : '')+'>'+d+' dni</b>');
+      }).join(''); } });
   }
-
-  /* 4. WSTRZYMANE — jedna zwinięta linijka (A-18: przypominają się raz
-     w miesiącu). Nie znikają z oczu, ale nie zabierają miejsca. */
   var wstrzymane = sp.filter(czyWstrzymana);
   if (wstrzymane.length){
-    h += '<div class="karta">'+
-      '<div class="linia" onclick="przelaczWstrzymane()"><span class="lw"><b>'+
-      wstrzymane.length+'</b> '+odmianaWstrzymanych_(wstrzymane.length)+
-      ' bezterminowo — przypomną się raz w miesiącu</span>'+
-      '<span class="pr" style="color:var(--akcent);font-weight:700">'+
-      (wstrzymaneOtwarte ? 'ukryj' : 'pokaż')+'</span></div>';
-    if (wstrzymaneOtwarte)
-      wstrzymane.forEach(function(s){
-        h += linijkaSprawy_(s, '', '<i> · czeka na: '+esc(naKogoCzekam_(s) || 'nieustalone')+'</i>');
-      });
-    h += '</div>';
+    spokojne.push({ klucz:'wstrzymane', ile:wstrzymane.length,
+      opis: odmianaWstrzymanych_(wstrzymane.length)+' bezterminowo — przypomną się raz w miesiącu',
+      rysuj: function(){ return wstrzymane.map(function(s){
+        return linijkaSprawy_(s, '', '<i> · czeka na: '+esc(naKogoCzekam_(s) || 'nieustalone')+'</i>');
+      }).join(''); } });
+  }
+  var spokojneHTML = '';
+  if (spokojne.length){
+    spokojneHTML = '<div class="h">Spokojne — nic tu dziś nie wymaga ruchu</div><div class="karta">';
+    spokojne.forEach(function(x){
+      var otw = !!otwarteSpokojne[x.klucz];
+      spokojneHTML += '<div class="linia" onclick="przelaczSpokojne(\'' + x.klucz + '\')">'+
+        '<span class="lw"><b>'+x.ile+'</b> '+x.opis+'</span>'+
+        '<span class="pr" style="color:var(--akcent);font-weight:700">'+(otw?'ukryj':'pokaż')+'</span></div>'+
+        (otw ? x.rysuj() : '');
+    });
+    spokojneHTML += '</div>';
   }
 
   /* A-04t: OSOBNA sekcja (wariant C) — terminy to nie to samo co sprawy
@@ -2083,11 +2106,12 @@ function rysujPuls(){
     h += '</div>';
   }
 
-  h += '<div class="h">Flota w liczbach</div><div class="stats">'+
-    '<div class="stat"><div class="n">'+wToku.length+'</div><div class="l">sprawy w toku</div></div>'+
-    '<div class="stat"><div class="n'+(terminDzis.length?' uw':'')+'">'+terminDzis.length+'</div><div class="l">termin dziś</div></div>'+
-    '<div class="stat"><div class="n">'+wSerwisie.length+'</div><div class="l">w serwisie</div></div>'+
-    '<div class="stat"><div class="n'+(poTerminie.length?' zl':'')+'">'+poTerminie.length+'</div><div class="l">po terminie</div></div></div>';
+  /* A-32: „Flota w liczbach" USUNIĘTE. Zmierzone 12.09: 166 px (11% Pulsu)
+     i ZERO wierszy, w które da się kliknąć. Trzy z czterech liczb Marek ma
+     w sekcjach wyżej, a „w serwisie" liczyło każdą sprawę „W realizacji" —
+     więc zamówione lusterko pokazywało się jako maszyna w serwisie.
+     Decyzja Marka 12.09: „niech zniknie, jak coś to się doda". */
+  h += spokojneHTML;
 
   h += '<div class="stopka-wersji" id="stopkaWersji"></div>';
   el('ekranPuls').innerHTML = h;
@@ -2272,8 +2296,10 @@ function kafelSprawy_(s, opcje){
 /* Z-11: trzy filtry zamiast dwóch. „W toku" mieszało robotę z czekaniem
    na fakturę — teraz stan widać z samego filtra. */
 /* A-30: zwinięta lista wstrzymanych na Pulsie */
-var wstrzymaneOtwarte = false;
-function przelaczWstrzymane(){ wstrzymaneOtwarte = !wstrzymaneOtwarte; rysujPuls(); }
+/* A-32: która ze spokojnych linijek jest rozwinięta. Stan trzymamy w pamięci,
+   nie w localStorage — po odświeżeniu Puls ma wyglądać tak samo jak rano. */
+var otwarteSpokojne = {};
+function przelaczSpokojne(k){ otwarteSpokojne[k] = !otwarteSpokojne[k]; rysujPuls(); }
 function odmianaWstrzymanych_(n){
   if (n === 1) return 'sprawa wstrzymana';
   var d = n % 10, s = n % 100;
