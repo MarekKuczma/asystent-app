@@ -927,6 +927,19 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .te .td{font-size:10px; color:var(--szary)}
 .te .tx{font-size:12.5px; margin-top:2px; line-height:1.45; white-space:pre-wrap}
 .te .tx .pill{margin-left:4px}
+/* A-26 (11.09.2026): etykieta „zmiana" w Historii to ZDANIE, nie plakietka.
+   .pill ma white-space:nowrap (slusznie — to klasa krotkich plakietek typu
+   „PILNE"), wiec dluga etykieta uciekala poza ekran telefonu: zmierzone na
+   Z0005, najdluzsza siegala 875 px przy ekranie 420 px. Te same tokeny koloru
+   co .pill.szara (tlo --wcisk, tekst --szary), wiec kontrast bez zmian:
+   4,26:1 w jasnym i 5,63:1 w ciemnym. Ta sama rodzina bledu co E-41. */
+.te .zm{display:block; margin-top:5px; padding:5px 9px; border-radius:9px;
+   background:var(--wcisk); color:var(--szary); font-size:11px; font-weight:600;
+   line-height:1.4; white-space:normal; overflow-wrap:anywhere}
+/* A-26: notatka ma LAMAC LINIE. Bez tego format STAN / ZOSTALO / UWAGA z A-25
+   sklejal sie w jeden blok tekstu i Marek nie znajdowal w nim „co zostalo". */
+.notatka{font-size:12.5px; line-height:1.55; white-space:pre-line}
+.notatka b{color:var(--tekst)}
 
 /* koszty: 3 przekroje */
 .seg{display:flex; background:var(--wcisk); border-radius:12px; padding:3px; margin:10px 0}
@@ -1351,7 +1364,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v27';
+var WERSJA_SHELL = 'asystent-v28';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -2334,7 +2347,7 @@ function rysujKartaSprawy(){
            (wstrzymanaWrocila(s) ? ' · wróciła' : '') : 'bezterminowo')+'</div></div>' : '')+
     '</div></div>';
   if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
-    '<div style="font-size:12.5px; line-height:1.45">'+esc(s.notatki)+'</div></div>';
+    '<div class="notatka">'+notatkaHTML_(s.notatki)+'</div></div>';
   h += '<div class="h">Opis — dosłownie, jak podano</div><div class="karta"><p class="surowy">'+esc(s.opis||'')+'</p></div>';
 
   var czekajace = (dane.skrzynka||[]).filter(function(w){ return w.rodzaj==='dopisek' && w.dotyczy===s.id; });
@@ -2346,7 +2359,7 @@ function rysujKartaSprawy(){
   (s.historia||[]).slice().reverse().forEach(function(w){
     h += '<div class="te'+(w.typ==='utworzenie'?'':' ')+'"><div class="td">'+esc(czasPL(w.data))+' · '+esc(w.kto||'')+
       ' · '+esc(w.typ||'')+'</div><div class="tx">'+esc(w.typ==='utworzenie' ? 'utworzenie sprawy — pełna treść wyżej, w „Opis"' : (w.tresc||''))+
-      (w.zmiana ? ' <span class="pill szara">'+esc(w.zmiana)+'</span>' : '')+'</div></div>';
+      (w.zmiana ? '<span class="zm">'+esc(w.zmiana)+'</span>' : '')+'</div></div>';
   });
   h += '</div></div>';
 
@@ -2356,6 +2369,18 @@ function rysujKartaSprawy(){
     '<div class="przycisk-glow" style="margin-top:9px"><button class="przycisk" onclick="wyslijDopisek()">Dopisz</button></div>'+
     '<div class="fnote">sprawy się nie edytuje w polach — dopisujesz treść, a status wynika z treści;<br>każdy dopisek zostaje w Historii</div></div>';
   el('ekranSprawa').innerHTML = h;
+}
+
+/* A-26 (11.09.2026): etykiety STAN: / ZOSTALO: / UWAGA: / GDZIE: ... pogrubione,
+   zeby oko lapalo, gdzie zaczyna sie „co zostalo do zrobienia" (wybor Marka —
+   wariant B z makiety). Pogrubiamy WYLACZNIE etykiete na poczatku linii
+   (WIELKIE LITERY + dwukropek), nigdy tresci. Kolor bez zmian, samo pogrubienie,
+   wiec nie ma tu czego mierzyc kontrastem. */
+function notatkaHTML_(t){
+  return esc(t || '').split('\n').map(function(l){
+    return l.replace(/^(\s*(?:⚠\s*)?[A-ZĄĆĘŁŃÓŚŹŻ][A-ZĄĆĘŁŃÓŚŹŻ0-9 ,\/\-]{1,32}:)/,
+                     function(m){ return '<b>'+m+'</b>'; });
+  }).join('\n');
 }
 
 /* ---------- KOSZTY ---------- */
