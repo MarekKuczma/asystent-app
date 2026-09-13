@@ -1404,7 +1404,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v33';
+var WERSJA_SHELL = 'asystent-v34';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1752,16 +1752,32 @@ function pokaz(k){
 
 /* Z-9: wpis ze Skrzynki, który jest już w głównym pliku, przestaje "czekać".
    Skąd to wiemy BEZ odznaczania czegokolwiek w Skrzynce (Zasada #1 — stan
-   z danych): import do Zgłoszenia Floty.xlsx zapisuje S-ID w kolumnie R
-   "Źródło (S-ID)", eksport lustra niesie go jako `zrodlo` sprawy, a tu
-   wystarczy porównać. Zgłoszenie Marka 30.08: "odświeżanie nie odświeżyło
-   stanu zgłoszeń co czekają". Dopiski zostają — ich import to osobny tor. */
-function skrzynkaCzekajaca_(){
-  var zrodla = {};
-  (dane && dane.sprawy || []).forEach(function(s){ if (s.zrodlo) zrodla[s.zrodlo] = true; });
-  return (dane && dane.skrzynka || []).filter(function(w){
-    return !(w.rodzaj !== 'dopisek' && zrodla[w.s_id]);
+   z danych): przepisanie wpisu do Zgłoszenia Floty.xlsx zostawia jego S-ID
+   w bazie, eksport lustra go wiezie, a tu wystarczy porównać. Zgłoszenie
+   Marka 30.08: "odświeżanie nie odświeżyło stanu zgłoszeń co czekają".
+
+   A-35 (13.09.2026) — DOPISKI WCHODZĄ NA TĘ SAMĄ ZASADĘ.
+   Do dziś stała tu klauzula `w.rodzaj !== 'dopisek'`, czyli: dopisku nigdy nie
+   uznajemy za przepisany. Nie z lenistwa — dopisek nie zakłada sprawy, więc nie
+   miał gdzie zostawić swojego numeru (kolumna R mówi tylko, z czego sprawa
+   POWSTAŁA). Skutek w życiu: każdy dopisek wisiał w kolejce aż Marek odrzucił
+   go ręcznie (S0005/S0007/S0008/S0010 12.09, S0011 13.09) — a „odrzucony"
+   to nieprawda, bo wpis był przepisany co do słowa.
+   Od A-35 S-ID siedzi przy wpisie Historii, który z niego powstał (kolumna H),
+   więc pytanie „czy to już jest w bazie" ma jedną odpowiedź dla obu rodzajów
+   i klauzula znika. `zrodlaWBazie_()` zwraca mapę S-ID -> Z-ID, bo numer sprawy
+   przydaje się też do pokazania, GDZIE wpis wylądował. */
+function zrodlaWBazie_(){
+  var z = {};
+  (dane && dane.sprawy || []).forEach(function(s){
+    if (s.zrodlo) z[s.zrodlo] = s.id;
+    (s.historia || []).forEach(function(w){ if (w.zrodlo) z[w.zrodlo] = s.id; });
   });
+  return z;
+}
+function skrzynkaCzekajaca_(){
+  var zrodla = zrodlaWBazie_();
+  return (dane && dane.skrzynka || []).filter(function(w){ return !zrodla[w.s_id]; });
 }
 /* ================= A-17: Skrzynka — porządkowanie (wariant C) =================
    Zasada, której ten kod pilnuje: użytkownik może wpis ODRZUCIĆ, ale nie może
@@ -2592,7 +2608,11 @@ function rysujKartaSprawy(){
     '<div class="fnote">Dosłownie, jak podano — tych słów appka nigdy nie przepisuje. '+
     'Co z nich wynika, jest w Notatce wyżej.</div></div>';
 
-  var czekajace = (dane.skrzynka||[]).filter(function(w){ return w.rodzaj==='dopisek' && w.dotyczy===s.id; });
+  /* A-35: karta sprawy pokazywała dopisek jako „czeka" nawet wtedy, gdy był już
+     przepisany — te same słowa stały wtedy DWA RAZY pod sobą: raz z żółtą
+     plakietką, raz jako wpis Historii. Filtr przepuszcza już tylko to, czego
+     naprawdę w bazie nie ma. */
+  var czekajace = skrzynkaCzekajaca_().filter(function(w){ return w.rodzaj==='dopisek' && w.dotyczy===s.id; });
   h += '<div class="h">Historia</div><div class="karta"><div class="tl">';
   czekajace.forEach(function(w){
     h += '<div class="te czeka"><div class="td">'+esc(w.utworzono)+' · '+esc(w.kto)+
