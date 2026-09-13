@@ -1031,8 +1031,13 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    dotąd, krzyżyki pojawiają się dopiero po włączeniu trybu. Powód: kciuk na
    telefonie trafia w wiersz łatwiej, niż by się chciało, a odrzucenie wpisu to
    jedyne miejsce, gdzie użytkownik SAM usuwa coś z widoku. */
-.sk-h-linia{display:flex; align-items:center; justify-content:space-between; gap:10px}
-.sk-h-linia .h{margin:14px 0 8px}
+/* ⚠ 13.09.2026 (zgłoszenie Marka): guzik „Porządkuj" jest WYŻSZY (36 px) niż
+   napis nagłówka, a odstęp 8 px wisiał na `.h`, nie na całym wierszu — więc pod
+   guzikiem zostawało 6 px i dotykał karty. Odstęp przenosimy na wiersz, żeby
+   liczył się od tego, co najniższe, nie od samego napisu. */
+.sk-h-linia{display:flex; align-items:center; justify-content:space-between;
+   gap:10px; margin-bottom:8px}
+.sk-h-linia .h{margin:14px 0 0}
 .sk-btn{display:inline-flex; align-items:center; justify-content:center; gap:6px;
    font:inherit; font-size:11.5px; font-weight:600; padding:0 13px; min-height:44px;
    border-radius:999px; cursor:pointer; flex:none; background:transparent;
@@ -1399,7 +1404,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v32';
+var WERSJA_SHELL = 'asystent-v33';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -2168,6 +2173,18 @@ function rysujPuls(){
      Decyzja Marka 12.09: „niech zniknie, jak coś to się doda". */
   h += spokojneHTML;
 
+  /* A-16 (13.09.2026, decyzja Marka wieczorem): wejście do kontaktów NIE
+     w pasku zakładek (ma zostać pięcioelementowy) i NIE w „Szukaj" (tam szuka
+     się maszyn) — jedna cicha linijka na samym DOLE Pulsu, pod wszystkim.
+     Odpowiada na „dzwonię do firmy, a nie pamiętam, której sprawy to dotyczy";
+     druga droga to komórka „Serwis" na karcie sprawy.
+     ⚠ Świadomie POD sekcjami, nie między nimi: A-32 wyczyścił Puls z rzeczy,
+     które nie wymagają ruchu — ta linijka niczego nie przypomina, tylko czeka. */
+  if ((dane.kontrahenci || []).length)
+    h += '<div class="karta" style="margin-top:10px"><div class="linia" onclick="otworzKontrahentow()">'+
+      '<span class="lw">Kontrahenci · <b>'+dane.kontrahenci.length+'</b> — telefony do serwisów</span>'+
+      '<span class="pr" style="color:var(--akcent);font-weight:700">otwórz</span></div></div>';
+
   h += '<div class="stopka-wersji" id="stopkaWersji"></div>';
   el('ekranPuls').innerHTML = h;
   pokazWersje();
@@ -2205,14 +2222,6 @@ function rysujSzukaj(){
   h += '<div class="chips">'+katy.map(function(k){
     return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
   }).join('')+'</div>';
-  /* A-16 (13.09.2026): wejście do kontaktów NIE z paska zakładek (ma zostać
-     pięcioelementowy), tylko stąd — „Szukaj" to ekran od znajdowania rzeczy.
-     Odpowiada na pytanie „dzwonię do firmy, a nie pamiętam, której sprawy to
-     dotyczy"; drugą drogą jest komórka „Serwis" na karcie sprawy. */
-  if ((dane.kontrahenci||[]).length)
-    h += '<div class="row" style="cursor:pointer;margin-bottom:10px" onclick="otworzKontrahentow()">'+
-      '<div class="mid"><div class="t1">Kontrahenci · '+dane.kontrahenci.length+'</div>'+
-      '<div class="t2">telefony i maile do serwisów</div></div></div>';
   var lista = sortujMaszyny((dane.maszyny||[]).filter(function(m){
     if (filtrKat!=='wszystkie' && kodRodzaju(m.rodzaj)!==filtrKat) return false;
     if (!filtrTekst) return true;
@@ -2304,7 +2313,16 @@ function kontaktHTML_(k){
   if (k.adres)   h += '<div class="kt-l"><span class="kt-e">adres</span>'+esc(k.adres)+'</div>';
   return h;
 }
-function otworzKontrahentow(){ rysujKontrahentow(); pokaz('kontrahenci'); }
+/* ⚠ „Wróć" NIE może iść przez `poprzedni`: `pokaz()` ustawia je na KAŻDY ekran
+   poza Ustawieniami, więc po wejściu tutaj `poprzedni` === 'kontrahenci' i guzik
+   wracał sam do siebie (zgłoszenie Marka 13.09: „nie działa na ekranie
+   kontrahentów"). Zapamiętujemy ekran PRZED przejściem — tak jak karta maszyny
+   wraca na „szukaj". */
+var skadKontrahenci = 'puls';
+function otworzKontrahentow(){
+  if (aktualny !== 'kontrahenci') skadKontrahenci = aktualny;
+  rysujKontrahentow(); pokaz('kontrahenci');
+}
 function rysujKontrahentow(){
   var lista = (dane && dane.kontrahenci || []);
   /* przy każdej firmie liczba spraw — po to, żeby było widać, kto robi u nas
@@ -2313,7 +2331,8 @@ function rysujKontrahentow(){
   (dane && dane.sprawy || []).forEach(function(s){
     (mapa[s.id] || []).forEach(function(id){ ile[id] = (ile[id]||0) + 1; });
   });
-  var h = '<span class="sp-back" onclick="pokaz(poprzedni)">'+I.back+' wróć</span>'+
+  var h = '<span class="sp-back" onclick="pokaz(skadKontrahenci)">'+I.back+
+    (skadKontrahenci === 'sprawa' ? ' sprawa' : ' wróć')+'</span>'+
     '<div class="h">Kontrahenci · '+lista.length+'</div>';
   if (!lista.length){
     h += '<div class="karta"><div class="pusto">Brak kontaktów — appka dostaje je '+
