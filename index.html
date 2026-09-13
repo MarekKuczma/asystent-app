@@ -916,6 +916,23 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .meta2 .m{background:var(--wcisk); border-radius:10px; padding:7px 10px}
 .meta2 .m .k{font-size:9px; color:var(--szary); text-transform:uppercase; letter-spacing:.5px; font-weight:700}
 .meta2 .m .v{font-size:12px; font-weight:600; margin-top:2px; word-break:break-word}
+/* ── A-16 (13.09.2026): KONTAKT DO SERWISU ────────────────────────────────
+   Zgłoszenie Marka 02.09: „chciałem zadzwonić do M-D Service, a nie mogę
+   znaleźć numeru". Telefon i mail są PRZYCISKAMI (`tel:` / `mailto:`), bo
+   inaczej numer i tak trzeba przepisywać — a o to właśnie był żal.
+   ⚠ Komplet danych to WYJĄTEK (Marek 02.09: „numery albo maile nie zawsze
+   będą"). Pokazujemy to, co jest; pustych pól po prostu nie ma — żadnych „—"
+   ani „brak danych", bo to zamienia normalny stan w wyrzut sumienia. */
+.kt-nazwa{font-weight:700; font-size:15px; margin-bottom:2px}
+.kt-spec{color:var(--szary); font-size:12.5px; margin-bottom:10px}
+.kt-btn{display:flex; align-items:center; gap:8px; background:var(--bg-turkus);
+   color:var(--tekst-turkus); border-radius:12px; padding:11px 14px; margin-bottom:8px;
+   font-size:14px; text-decoration:none}
+.kt-btn b{font-size:15px}
+.kt-l{display:flex; gap:10px; font-size:13.5px; padding:4px 2px}
+.kt-e{color:var(--szary); min-width:52px; font-size:12.5px}
+.kt-firma{padding:12px 0; border-top:1px solid var(--linia)}
+.kt-firma:first-child{padding-top:0; border-top:0}
 .surowy{margin:0; font-size:12.5px; line-height:1.55; font-style:italic;
    border-left:3px solid var(--akcent-moc); padding:2px 0 2px 11px; white-space:pre-wrap}
 .tl{position:relative; padding-left:17px}
@@ -1195,6 +1212,10 @@ nav .wskaznik.bez-zakladki{opacity:0}
       <div class="scr" data-s="sprawy"><div id="ekranSprawy"></div></div>
       <div class="scr" data-s="sprawa"><div id="ekranSprawa"></div></div>
       <div class="scr" data-s="koszty"><div id="ekranKoszty"></div></div>
+      <!-- A-16 (13.09.2026): ekran „Kontrahenci". Nie dostaje własnej zakładki
+           w pasku — wchodzi się z karty sprawy albo z ekranu „Szukaj", tak samo
+           jak na kartę maszyny. Pasek ma pięć pozycji i tak ma zostać. -->
+      <div class="scr" data-s="kontrahenci"><div id="ekranKontrahenci"></div></div>
       <div class="scr" data-s="zglos"><div id="ekranZglos"></div></div>
       <div class="scr" data-s="ustawienia">
         <div id="ustawieniaWyglad"></div>
@@ -1378,7 +1399,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v31';
+var WERSJA_SHELL = 'asystent-v32';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -2184,6 +2205,14 @@ function rysujSzukaj(){
   h += '<div class="chips">'+katy.map(function(k){
     return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
   }).join('')+'</div>';
+  /* A-16 (13.09.2026): wejście do kontaktów NIE z paska zakładek (ma zostać
+     pięcioelementowy), tylko stąd — „Szukaj" to ekran od znajdowania rzeczy.
+     Odpowiada na pytanie „dzwonię do firmy, a nie pamiętam, której sprawy to
+     dotyczy"; drugą drogą jest komórka „Serwis" na karcie sprawy. */
+  if ((dane.kontrahenci||[]).length)
+    h += '<div class="row" style="cursor:pointer;margin-bottom:10px" onclick="otworzKontrahentow()">'+
+      '<div class="mid"><div class="t1">Kontrahenci · '+dane.kontrahenci.length+'</div>'+
+      '<div class="t2">telefony i maile do serwisów</div></div></div>';
   var lista = sortujMaszyny((dane.maszyny||[]).filter(function(m){
     if (filtrKat!=='wszystkie' && kodRodzaju(m.rodzaj)!==filtrKat) return false;
     if (!filtrTekst) return true;
@@ -2232,6 +2261,74 @@ function terminHTML(nazwa, iso){
 }
 function otworzMaszyne(id){
   biezacaMaszyna = id; rysujKartaMaszyny(); pokaz('karta');
+}
+
+/* ══════════ A-16 (13.09.2026): KONTAKT DO SERWISU ═══════════════════════════
+   Zgłoszenie Marka (02.09): „żeby w tych zgłoszeniach pokazywał się też kontakt
+   do serwisu … chciałem zadzwonić do M-D Service, a nie mogę znaleźć numeru".
+
+   Numery leżały w bazie (zakładka Kontrahenci) od 27.08, ale lustro ich NIE
+   EKSPORTOWAŁO — appka nie miała skąd ich wziąć. Od API v6 przychodzą w polu
+   `kontrahenci`, a sprawa niesie listę kodów w `kontrahent` (kolumna W).
+
+   ⚠ Powiązanie bierze się z KOLUMNY W „Kontrahent" w arkuszu, nie z tekstu
+   notatki (decyzja Marka 13.09). W Z0003 w notatce stoi „Bemo Motors (K004)",
+   ale to serwis, który przy tej sprawie ODPADŁ — robi ją niezależny mechanik.
+   Tekst mówi, o kim mowa; kolumna mówi, kto to robi. To nie jest to samo.
+
+   ⚠ Do appki mapa „sprawa → firmy" jedzie w pliku KONTRAHENTÓW (`kontrahenciSpraw`),
+   a nie jako pole sprawy. Powód praktyczny: lustro wgrywa się na Dysk ręcznie,
+   przez sesję, a `lustro_sprawy.json` ma 53 kB — plik kontrahentów 1,3 kB.
+   Dokładanie kontaktów nie rusza więc dużego pliku, a najgorsze, co może wyjść
+   z pomyłki przy wgrywaniu, to brak kontaktów zamiast zniknięcia wszystkich spraw.
+
+   ⚠ Stary backend (v5) nie przysyła `kontrahenci` — wtedy po prostu nie ma
+   czego pokazać i karta kontaktu się nie pojawia. Appka ma działać dalej;
+   to jest normalny stan przez kilka minut między wgraniem PWA a wklejeniem
+   Apps Script. */
+function kontrahent_(id){
+  return (dane && dane.kontrahenci || []).find(function(k){ return k.id === id; }) || null;
+}
+function kontrahenciSprawy_(s){
+  var mapa = (dane && dane.kontrahenciSpraw) || {};
+  return ((s && mapa[s.id]) || []).map(kontrahent_).filter(Boolean);
+}
+/* Jeden blok danych firmy: telefon → mail → osoba → adres, czyli w kolejności
+   przydatności przy telefonie w ręku. Puste pola nie istnieją. */
+function kontaktHTML_(k){
+  var h = '';
+  if (k.telefon) h += '<a class="kt-btn" href="tel:'+esc(String(k.telefon).replace(/\s/g,''))+'">'+
+                      '<b>'+esc(k.telefon)+'</b> · zadzwoń</a>';
+  if (k.mail)    h += '<a class="kt-btn" href="mailto:'+esc(k.mail)+'">'+esc(k.mail)+' · napisz</a>';
+  if (k.osoba)   h += '<div class="kt-l"><span class="kt-e">osoba</span>'+esc(k.osoba)+'</div>';
+  if (k.adres)   h += '<div class="kt-l"><span class="kt-e">adres</span>'+esc(k.adres)+'</div>';
+  return h;
+}
+function otworzKontrahentow(){ rysujKontrahentow(); pokaz('kontrahenci'); }
+function rysujKontrahentow(){
+  var lista = (dane && dane.kontrahenci || []);
+  /* przy każdej firmie liczba spraw — po to, żeby było widać, kto robi u nas
+     najwięcej, i żeby lista nie była samym spisem nazw */
+  var ile = {}, mapa = (dane && dane.kontrahenciSpraw) || {};
+  (dane && dane.sprawy || []).forEach(function(s){
+    (mapa[s.id] || []).forEach(function(id){ ile[id] = (ile[id]||0) + 1; });
+  });
+  var h = '<span class="sp-back" onclick="pokaz(poprzedni)">'+I.back+' wróć</span>'+
+    '<div class="h">Kontrahenci · '+lista.length+'</div>';
+  if (!lista.length){
+    h += '<div class="karta"><div class="pusto">Brak kontaktów — appka dostaje je '+
+         'z zakładki „Kontrahenci" w bazie.</div></div>';
+  } else {
+    h += '<div class="karta">'+lista.map(function(k){
+      return '<div class="kt-firma"><div class="kt-nazwa">'+esc(k.nazwa||k.id)+
+        (ile[k.id] ? ' <span class="pill szara">'+ile[k.id]+' spr.</span>' : '')+'</div>'+
+        (k.specjalizacja ? '<div class="kt-spec">'+esc(k.specjalizacja)+'</div>' : '')+
+        kontaktHTML_(k)+'</div>';
+    }).join('')+'</div>'+
+    '<div class="fnote">Kontakty prowadzimy w bazie, w zakładce „Kontrahenci" — '+
+    'appka tylko je pokazuje.</div>';
+  }
+  el('ekranKontrahenci').innerHTML = h;
 }
 function rysujKartaMaszyny(){
   var m = (dane.maszyny||[]).find(function(x){ return x.id === biezacaMaszyna; });
@@ -2409,6 +2506,14 @@ function rysujKartaSprawy(){
       '<div class="k">Maszyna</div><div class="v">'+esc(m ? m.nazwa+(m.rejestracja?' · '+m.rejestracja:'') : s.maszyna||'—')+'</div></div>'+
     '<div class="m"><div class="k">Zgłosił</div><div class="v">'+esc(s.zglosil||'—')+' · '+esc(dataPL(s.utworzono))+'</div></div>'+
     '<div class="m"><div class="k">Termin</div><div class="v">'+esc(s.termin ? dataPL(s.termin) : '—')+'</div></div>'+
+    /* A-16: kto to robi — w siatce u góry, obok maszyny i terminu. Komórki nie
+       ma wcale, gdy sprawa nie ma przypisanej firmy (np. Z0003: mechanik
+       jeszcze bez nazwy) — pusta komórka „Serwis: —" niczego by nie wnosiła. */
+    (kontrahenciSprawy_(s).length
+      ? '<div class="m" style="cursor:pointer" onclick="otworzKontrahentow()">'+
+        '<div class="k">'+(kontrahenciSprawy_(s).length > 1 ? 'Serwisy' : 'Serwis')+'</div>'+
+        '<div class="v">'+kontrahenciSprawy_(s).map(function(k){ return esc(k.nazwa||k.id); }).join(' · ')+
+        '</div></div>' : '')+
     /* A-18: przy wstrzymanej sprawie ważniejsze od terminu jest to, DO KIEDY
        ma milczeć — inaczej nie wiadomo, czy ktoś o niej jeszcze pamięta. */
     (s.status === 'Wstrzymane'
@@ -2416,6 +2521,22 @@ function rysujKartaSprawy(){
         (s.wstrzymane_do ? esc(dataPL(s.wstrzymane_do)) +
            (wstrzymanaWrocila(s) ? ' · wróciła' : '') : 'bezterminowo')+'</div></div>' : '')+
     '</div></div>';
+  /* A-16: kontakt STOI NAD NOTATKĄ — po to, żeby przy „czekamy na wycenę"
+     telefon był pod ręką od razu, a nie po przewinięciu całej notatki.
+     ⚠ Jedyne miejsce, gdzie mówimy „do uzupełnienia": TU, przy konkretnej
+     sprawie. Przyszedłeś po numer, więc brak numeru jest odpowiedzią na
+     pytanie. Na liście wszystkich firm tego napisu NIE MA — tam byłby ścianą
+     wyrzutów przy każdej pozycji bez telefonu. */
+  var firmy = kontrahenciSprawy_(s);
+  if (firmy.length) h += '<div class="h">'+(firmy.length > 1 ? 'Kontakty do serwisów' : 'Kontakt do serwisu')+
+    '</div><div class="karta">'+firmy.map(function(k, i){
+      return '<div class="kt-firma"'+(i ? '' : ' style="padding-top:0;border-top:0"')+'>'+
+        '<div class="kt-nazwa">'+esc(k.nazwa||k.id)+'</div>'+
+        (k.specjalizacja ? '<div class="kt-spec">'+esc(k.specjalizacja)+'</div>' : '')+
+        (kontaktHTML_(k) || '<div class="kt-l"><span class="kt-e">kontakt</span>do uzupełnienia w bazie</div>')+
+        '</div>';
+    }).join('')+'</div>';
+
   if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
     '<div class="notatka">'+notatkaHTML_(s.notatki)+'</div></div>';
   /* A-27: slowa Marka w kolejnosci, w jakiej padly. Wpis „utworzenie" pomijamy —
