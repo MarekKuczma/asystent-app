@@ -859,6 +859,37 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .row .s-nr{font-size:10.5px; color:var(--szary); font-variant-numeric:tabular-nums}
 .row .s-ter{font-size:10.5px; font-weight:700; color:var(--uwaga)}
 .row .s-ter.red{color:var(--blad)}
+.row .s-czekam{font-size:11px; color:var(--szary); margin-top:3px; line-height:1.35}   /* A-42: „czekam na: kto" w osobnej linijce */
+/* A-42 (23.09.2026): ETAP SPRAWY — sześć kropek pod tytułem (wybór Marka: 2A kropki).
+   Kolejność = cykl życia sprawy: Nowe → Wycena → Umówione → W realizacji → Wykonane →
+   Rozliczone. Kropki ZA nami w akcencie, BIEŻĄCA jaśniejsza z obwódką, przed nami puste.
+   Marek 23.09: „w jakim %" nie było dosłowne — „jeśli można jakoś to pokazać to super". */
+.etap{display:flex; align-items:center; gap:4px; margin-top:5px}
+.etap i{display:block; width:7px; height:7px; border-radius:50%; background:var(--linia)}
+.etap i.on{background:var(--akcent)}
+.etap i.now{background:var(--akcent-moc); box-shadow:0 0 0 2px color-mix(in srgb, var(--akcent) 28%, transparent)}
+.etap.anul i{background:var(--linia)}
+.etap small{font-size:10.5px; color:var(--szary); margin-left:4px; white-space:nowrap}
+.sp-title .etap{margin:6px 0 2px}
+/* A-42: NOTATKA W KARCIE — STAN i ZOSTAŁO jako dwie krótkie karty, reszta pod „więcej".
+   Diagnoza 23.09 (zrzuty na żywych danych): notatka była jednym blokiem, bo appka pokazywała
+   całość, a dopiski po „|" robiły z niej kronikę. */
+.nk{padding:10px 12px 10px 14px; border-left:4px solid var(--akcent); border-radius:0}
+.nk.zostalo{border-left-color:var(--tekst-turkus); border-top:1px solid var(--linia)}
+.nk .nk-e{display:block; font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--szary); margin-bottom:3px}
+.nk p{margin:0; font-size:13.5px; line-height:1.45; white-space:pre-line}
+.nk.zostalo p b{color:var(--tekst-turkus)}
+.nk-reszta{border-top:1px solid var(--linia)}
+.nk-reszta .notatka{padding:10px 12px}
+.sk-btn.nk-btn{margin:0; width:100%; border-radius:0 0 13px 13px; border-top:1px solid var(--linia)}
+/* A-42: KONTRAHENCI jako zakładka — każda firma to osobna, neutralna karta (uwaga Marka 23.09:
+   bez kolorowej ramki z lewej), z listą spraw, przy których teraz wisi. */
+.kt-karta{margin-bottom:10px}
+.kt-karta .kt-firma{padding:0; border-top:0}
+.kt-spr{font-size:11.5px; color:var(--szary); margin-top:8px; line-height:1.45}
+.kt-spr b{color:var(--tekst)}
+.kt-brak{display:flex; align-items:center; gap:8px; background:var(--wcisk); color:var(--szary);
+   border-radius:12px; padding:11px 14px; margin-bottom:8px; font-size:13px}
 
 /* szukajka */
 .szukajka{display:flex; gap:8px; align-items:center; background:var(--karta); border-radius:14px;
@@ -935,6 +966,7 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
 .kt-e{color:var(--szary); min-width:52px; font-size:12.5px}
 .kt-firma{padding:12px 0; border-top:1px solid var(--linia)}
 .kt-firma:first-child{padding-top:0; border-top:0}
+.karta.bez-pad{padding:0}
 .surowy{margin:0; font-size:12.5px; line-height:1.55; font-style:italic;
    border-left:3px solid var(--akcent-moc); padding:2px 0 2px 11px; white-space:pre-wrap}
 .tl{position:relative; padding-left:17px}
@@ -1318,9 +1350,8 @@ nav .wskaznik.bez-zakladki{opacity:0}
       <div class="scr" data-s="sprawy"><div id="ekranSprawy"></div></div>
       <div class="scr" data-s="sprawa"><div id="ekranSprawa"></div></div>
       <div class="scr" data-s="koszty"><div id="ekranKoszty"></div></div>
-      <!-- A-16 (13.09.2026): ekran „Kontrahenci". Nie dostaje własnej zakładki
-           w pasku — wchodzi się z karty sprawy albo z ekranu „Szukaj", tak samo
-           jak na kartę maszyny. Pasek ma pięć pozycji i tak ma zostać. -->
+      <!-- A-16 (13.09.2026): ekran „Kontrahenci" — wtedy bez zakładki. A-42 (23.09.2026):
+           dostał piątą zakładkę w miejsce Kosztów (decyzja Marka). Pasek nadal ma pięć pozycji. -->
       <div class="scr" data-s="kontrahenci"><div id="ekranKontrahenci"></div></div>
       <div class="scr" data-s="zglos"><div id="ekranZglos"></div></div>
       <div class="scr" data-s="ustawienia">
@@ -1335,7 +1366,7 @@ nav .wskaznik.bez-zakladki{opacity:0}
       <button data-n="szukaj"></button>
       <button data-n="zglos" class="zg"></button>
       <button data-n="sprawy"></button>
-      <button data-n="koszty" id="navKoszty"></button>
+      <button data-n="kontrahenci" id="navKontrahenci"></button>
     </nav>
   </div>
 
@@ -1373,6 +1404,8 @@ var I = {
                    krzyzyk: svg_('<path d="m7 7 10 10M17 7 7 17"/>'),
   /* ic-clip */    sprawy:svg_('<path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/>'),
   /* ic-chart */   koszty:svg_('<path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/>'),
+  /* A-42: słuchawka — zakładka Kontrahenci („telefony do serwisów"), ta sama kreska */
+                   kontrahenci:svg_('<path d="M5.2 4.5h3.2l1.6 4-2 1.3a10.5 10.5 0 0 0 5.2 5.2l1.3-2 4 1.6v3.2a1.6 1.6 0 0 1-1.7 1.6A14.6 14.6 0 0 1 3.6 6.2a1.6 1.6 0 0 1 1.6-1.7Z"/>'),
   /* ic-site */    budowa:svg_('<path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/>'),
   /* ic-wrench */  wr:    svg_('<path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/>'),
   /* ic-warn */    uwaga: svg_('<path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/>'),
@@ -1505,7 +1538,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v35';
+var WERSJA_SHELL = 'asystent-v36';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1817,9 +1850,13 @@ el('loginBtn').onclick = function(){
 el('loginKod').addEventListener('keydown', function(e){ if(e.key==='Enter') el('loginBtn').click(); });
 
 /* ---------- NAWIGACJA (wskaźnik Z-95) ---------- */
-var TAB_IDX = { puls:0, szukaj:1, zglos:2, sprawy:3, koszty:4, karta:1, sprawa:3 };
+/* A-42 (23.09.2026): piąta zakładka to KONTRAHENCI, nie Koszty. Marek: „w koszty raczej nie
+   zaglądam, można by koszty zamienić może na kontrahentów?" — koszty ma w Panelu Floty, a telefon
+   do serwisu przydaje się w terenie. Ekran Kosztów zostaje w kodzie (rysujKoszty), tylko bez
+   wejścia z paska; A-16 zakładało pięcioelementowy pasek — nadal jest pięcioelementowy. */
+var TAB_IDX = { puls:0, szukaj:1, zglos:2, sprawy:3, kontrahenci:4, karta:1, sprawa:3 };
 var NAV_DEF = [['puls','Puls',I.puls],['szukaj','Szukaj',I.lupa],['zglos','',''],
-               ['sprawy','Sprawy',I.sprawy],['koszty','Koszty',I.koszty]];
+               ['sprawy','Sprawy',I.sprawy],['kontrahenci','Kontrahenci',I.kontrahenci]];
 function zbudujNav(){
   var btns = document.querySelectorAll('nav button');
   NAV_DEF.forEach(function(nd, i){
@@ -1848,6 +1885,7 @@ function pokaz(k){
          wsk.style.transform = 'translateX(' + TAB_IDX[k]*100 + '%)'; }
   el('gearBtn').classList.toggle('on', k === 'ustawienia');
   if (k === 'puls') rysujPuls();          /* puls zawsze swiezy (kolejka, liczby) */
+  if (k === 'kontrahenci') rysujKontrahentow();   /* A-42: zakładka rysuje się przy wejściu */
   window.scrollTo(0, 0);
 }
 
@@ -2156,8 +2194,8 @@ function rysujPuls(){
     /* Z-11: pusto ZNACZY „żadna sprawa nie przekroczyła progu" — dopisujemy
        ile ich w ogóle jest, żeby pustka nie wyglądała jak awaria. */
     h += '<div class="karta"><div class="pusto">Nic nie pali się dzisiaj — wszystko pod kontrolą.</div>'+
-      (wToku.length ? '<div class="fnote">'+wToku.length+' '+
-        (wToku.length===1?'sprawa w toku, żadna':'w toku, żadna')+
+      (wToku.length ? '<div class="fnote">'+wToku.filter(function(s){ return czyWRobocie(s.status); }).length+' '+
+        (wToku.filter(function(s){ return czyWRobocie(s.status); }).length===1?'sprawa w toku, żadna':'w toku, żadna')+
         ' nie przekroczyła progu przypomnienia'+
         /* A-18: bez tego dopisku „nic się nie pali" przy 7 wstrzymanych
            wyglądałoby, jakby sprawy wyparowały. */
@@ -2211,33 +2249,31 @@ function rysujPuls(){
   /* 2. SPOKOJNE — po jednej zwiniętej linijce na grupę. Linijka niesie liczbę
      i to, co z grupy najważniejsze, żeby dało się ją zignorować świadomie,
      a nie z niewiedzy. */
-  var spokojne = [];
+  /* ===== A-42 (23.09.2026): „W TOKU" WIDAĆ OD RAZU, faktury ZNIKAJĄ z Pulsu =====
+     Marek 23.09: „korzystam z pulsu, szybka wizualizacja co do zrobienia, co zrobione, jaki
+     etap sprawy". Zmierzone tego dnia na żywych danych: 18 spraw w toku siedziało pod trzema
+     linijkami „pokaż", a odpowiedź na „na jakim etapie" nie było nigdzie. Sprawy, przy których
+     piłka jest po cudzej stronie (dawna zwinięta linijka „czekają na innych"), stoją teraz jako
+     pełne kafelki z kropkami etapu i datą, kiedy dopytać. To NIE cofa A-32 („zwijamy to, przy
+     czym Marek nie ma ruchu"): rozwinięcie to była jego decyzja z 23.09, po obejrzeniu makiety.
+     ⚠ Sprawy „Wykonane — czeka na fakturę" z Pulsu WYPADAJĄ całkiem (także spokojna linijka
+     z A-20). Marek: „jak coś jest wykonane i czeka tylko na fakturę znaczy że jest wykonane
+     (…) faktura prędzej czy później trafi do nas". Nie giną: zakładka Sprawy → „Do rozliczenia". */
   if (czekamyNaNich.length){
     czekamyNaNich.sort(function(a,b){
       return String(a.zajac_sie_od||'9').localeCompare(String(b.zajac_sie_od||'9')); });
-    var najbl = czekamyNaNich.filter(function(s){ return s.zajac_sie_od; })[0];
-    spokojne.push({ klucz:'czekamy', ile:czekamyNaNich.length,
-      opis: (czekamyNaNich.length===1?'czeka':'czekają')+' na innych'+
-            (najbl ? ' — dopytaj <b>'+esc(dataKrotka_(najbl.zajac_sie_od))+'</b>' : ''),
-      rysuj: function(){ return czekamyNaNich.map(function(s){
-        var ruch = ostatniRuch_(s);
-        var prawa = s.zajac_sie_od ? 'dopytaj <b>'+esc(dataKrotka_(s.zajac_sie_od))+'</b>'
-                  : (ruch === null ? '' : ruch+' dn. ciszy');
-        return linijkaSprawy_(s, prawa, '<i> · czekam na: '+esc(naKogoCzekam_(s))+'</i>');
-      }).join(''); } });
+    h += '<div class="h">W toku · '+czekamyNaNich.length+'</div><div class="karta">';
+    czekamyNaNich.forEach(function(s){
+      var ruch = ostatniRuch_(s), kto = naKogoCzekam_(s);
+      var pill = s.zajac_sie_od
+        ? '<span class="pill szara">dopytaj '+esc(dataKrotka_(s.zajac_sie_od))+'</span>'
+        : (ruch === null ? pillStatus(s.status) : '<span class="pill szara">'+ruch+' dn. ciszy</span>');
+      /* status: false — etap (kropki) już mówi, na jakim etapie jest sprawa */
+      h += kafelSprawy_(s, { pill: pill, dopisek: kto ? 'czekam na: '+esc(kto) : '' });
+    });
+    h += '</div>';
   }
-  if (doRozliczenia.length){
-    doRozliczenia.sort(function(a,b){ return (dniOd_(b.status_od)||0) - (dniOd_(a.status_od)||0); });
-    var najdl = dniOd_(doRozliczenia[0].status_od);
-    spokojne.push({ klucz:'faktury', ile:doRozliczenia.length,
-      opis: (doRozliczenia.length===1?'czeka':'czekają')+' na fakturę'+
-            (najdl === null ? '' : ' — najdłużej <b'+(najdl > PROGI.faktura ? ' class="uw"' : '')+'>'+najdl+' dni</b>'),
-      rysuj: function(){ return doRozliczenia.map(function(s){
-        var d = dniOd_(s.status_od);
-        return linijkaSprawy_(s, d === null ? '' :
-          '<b'+(d > PROGI.faktura ? ' class="uw"' : '')+'>'+d+' dni</b>');
-      }).join(''); } });
-  }
+  var spokojne = [];
   var wstrzymane = sp.filter(czyWstrzymana);
   if (wstrzymane.length){
     spokojne.push({ klucz:'wstrzymane', ile:wstrzymane.length,
@@ -2297,10 +2333,8 @@ function rysujPuls(){
      druga droga to komórka „Serwis" na karcie sprawy.
      ⚠ Świadomie POD sekcjami, nie między nimi: A-32 wyczyścił Puls z rzeczy,
      które nie wymagają ruchu — ta linijka niczego nie przypomina, tylko czeka. */
-  if ((dane.kontrahenci || []).length)
-    h += '<div class="karta" style="margin-top:10px"><div class="linia" onclick="otworzKontrahentow()">'+
-      '<span class="lw">Kontrahenci · <b>'+dane.kontrahenci.length+'</b> — telefony do serwisów</span>'+
-      '<span class="pr" style="color:var(--akcent);font-weight:700">otwórz</span></div></div>';
+  /* A-42: linijka „Kontrahenci — otwórz" ZNIKA — od 23.09 Kontrahenci mają własną zakładkę
+     w pasku (w miejsce Kosztów), więc wejście z dołu Pulsu byłoby dublem. */
 
   h += '<div class="stopka-wersji" id="stopkaWersji"></div>';
   el('ekranPuls').innerHTML = h;
@@ -2440,30 +2474,47 @@ function otworzKontrahentow(){
   if (aktualny !== 'kontrahenci') skadKontrahenci = aktualny;
   rysujKontrahentow(); pokaz('kontrahenci');
 }
+/* A-42 (23.09.2026): Kontrahenci to ZAKŁADKA. Każda firma = osobna neutralna karta (Marek:
+   „wyraźniej je podzielić, żeby było widać że to nowy kontrahent", potem: „bez ramki po lewej").
+   Najpierw firmy, u których coś wisi (sprawy w toku), z listą tych spraw; pod spodem reszta.
+   ⚠ Brak telefonu pokazujemy JAWNIE („do uzupełnienia") — A-16 tego unikało na liście, ale
+   Marek zaakceptował to na makiecie: lista braków to lista rzeczy do załatwienia w bazie. */
 function rysujKontrahentow(){
   var lista = (dane && dane.kontrahenci || []);
-  /* przy każdej firmie liczba spraw — po to, żeby było widać, kto robi u nas
-     najwięcej, i żeby lista nie była samym spisem nazw */
-  var ile = {}, mapa = (dane && dane.kontrahenciSpraw) || {};
+  var mapa = (dane && dane.kontrahenciSpraw) || {}, sprawyFirmy = {};
   (dane && dane.sprawy || []).forEach(function(s){
-    (mapa[s.id] || []).forEach(function(id){ ile[id] = (ile[id]||0) + 1; });
+    if (!czyWToku(s.status)) return;
+    (mapa[s.id] || []).forEach(function(id){ (sprawyFirmy[id] = sprawyFirmy[id] || []).push(s); });
   });
-  var h = '<span class="sp-back" onclick="pokaz(skadKontrahenci)">'+I.back+
-    (skadKontrahenci === 'sprawa' ? ' sprawa' : ' wróć')+'</span>'+
-    '<div class="h">Kontrahenci · '+lista.length+'</div>';
+  var zTab = TAB_IDX[skadKontrahenci] !== undefined && skadKontrahenci !== 'sprawa' && skadKontrahenci !== 'karta';
+  var h = zTab ? '' : '<span class="sp-back" onclick="pokaz(skadKontrahenci)">'+I.back+
+    (skadKontrahenci === 'sprawa' ? ' sprawa' : ' wróć')+'</span>';
   if (!lista.length){
-    h += '<div class="karta"><div class="pusto">Brak kontaktów — appka dostaje je '+
+    h += '<div class="h">Kontrahenci</div><div class="karta"><div class="pusto">Brak kontaktów — appka dostaje je '+
          'z zakładki „Kontrahenci" w bazie.</div></div>';
-  } else {
-    h += '<div class="karta">'+lista.map(function(k){
-      return '<div class="kt-firma"><div class="kt-nazwa">'+esc(k.nazwa||k.id)+
-        (ile[k.id] ? ' <span class="pill szara">'+ile[k.id]+' spr.</span>' : '')+'</div>'+
-        (k.specjalizacja ? '<div class="kt-spec">'+esc(k.specjalizacja)+'</div>' : '')+
-        kontaktHTML_(k)+'</div>';
-    }).join('')+'</div>'+
-    '<div class="fnote">Kontakty prowadzimy w bazie, w zakładce „Kontrahenci" — '+
-    'appka tylko je pokazuje.</div>';
+    el('ekranKontrahenci').innerHTML = h; return;
   }
+  var zSprawami = lista.filter(function(k){ return (sprawyFirmy[k.id]||[]).length; })
+                       .sort(function(a,b){ return sprawyFirmy[b.id].length - sprawyFirmy[a.id].length; });
+  var reszta = lista.filter(function(k){ return !(sprawyFirmy[k.id]||[]).length; });
+  function kartaFirmy_(k){
+    var spr = sprawyFirmy[k.id] || [];
+    var kontakt = kontaktHTML_(k);
+    if (!k.telefon) kontakt = '<div class="kt-brak">telefon — do uzupełnienia w bazie</div>' + kontakt;
+    return '<div class="karta kt-karta"><div class="kt-firma"><div class="kt-nazwa">'+esc(k.nazwa||k.id)+'</div>'+
+      (k.specjalizacja ? '<div class="kt-spec">'+esc(k.specjalizacja)+'</div>' : '')+
+      kontakt+
+      (spr.length ? '<div class="kt-spr"><b>'+spr.length+' '+(spr.length===1?'sprawa':spr.length<5?'sprawy':'spraw')+':</b> '+
+        spr.map(function(s){
+          var m = maszynaSprawy(s), klucz = m ? kluczMaszyny(m) : (s.maszyna||'?');
+          return '<span onclick="otworzSprawe(\''+s.id+'\')" style="cursor:pointer">'+esc(klucz)+' — '+
+                 esc(String(s.tytul||'').split(' — ')[0].slice(0, 42))+'</span>';
+        }).join(' · ')+'</div>' : '')+
+      '</div></div>';
+  }
+  if (zSprawami.length) h += '<div class="h">Z otwartymi sprawami · '+zSprawami.length+'</div>'+zSprawami.map(kartaFirmy_).join('');
+  if (reszta.length) h += '<div class="h">Pozostali · '+reszta.length+'</div>'+reszta.map(kartaFirmy_).join('');
+  h += '<div class="fnote">Kontakty prowadzimy w bazie, w zakładce „Kontrahenci" — appka tylko je pokazuje.</div>';
   el('ekranKontrahenci').innerHTML = h;
 }
 function rysujKartaMaszyny(){
@@ -2521,6 +2572,32 @@ function dataKrotka_(iso){
 /* `opcje.pill` — gotowa plakietka zamiast domyślnej (Puls niesie tam POWÓD
    uwagi, nie status). `opcje.status` — dopisz status na dole, obok numeru
    (na Pulsie plakietka go nie pokazuje, a warto wiedzieć, na czym stoi). */
+/* A-42: etap sprawy. Kolejność statusów = cykl życia z notatki projektu. „Wstrzymane" nie jest
+   etapem, tylko pauzą — kropki pokazują wtedy etap sprzed pauzy (ostatni status z Historii), a
+   podpis mówi „wstrzymane". Anulowane = wszystkie kropki puste, podpis przekreślony. */
+var ETAPY = ['Nowe', 'Wycena', 'Umówione', 'W realizacji', 'Wykonane', 'Rozliczone'];
+function etapSprawy_(s){
+  var st = s.status;
+  if (st === 'Wstrzymane'){
+    var h = (s.historia || []);
+    for (var i = h.length - 1; i >= 0; i--){
+      var m = String(h[i].zmiana || '').match(/(Nowe|Wycena|Umówione|Umowione|W realizacji|Wykonane) *-> *Wstrzymane/);
+      if (m){ st = m[1] === 'Umowione' ? 'Umówione' : m[1]; break; }
+    }
+    if (st === 'Wstrzymane') st = 'Nowe';
+  }
+  return ETAPY.indexOf(st);     /* -1 = Anulowane albo status spoza cyklu */
+}
+function etapHTML_(s, podpis){
+  var idx = etapSprawy_(s), anul = s.status === 'Anulowane';
+  var kropki = ETAPY.map(function(e, i){
+    return '<i class="' + (anul ? '' : i < idx ? 'on' : i === idx ? 'now' : '') + '" title="' + e + '"></i>';
+  }).join('');
+  var opis = anul ? '<s>anulowana</s>'
+           : s.status === 'Wstrzymane' ? 'wstrzymane'
+           : esc(String(s.status || '').toLowerCase()) + ' · ' + (idx + 1) + '/' + ETAPY.length;
+  return '<div class="etap' + (anul ? ' anul' : '') + '">' + kropki + '<small>' + (podpis || opis) + '</small></div>';
+}
 function kafelSprawy_(s, opcje){
   opcje = opcje || {};
   var m = maszynaSprawy(s), d = dniDo(s.termin), wToku = czyWToku(s.status);
@@ -2545,6 +2622,7 @@ function kafelSprawy_(s, opcje){
           dataKrotka_(s.termin) + '</span>';
   }
   var stat = opcje.status ? '<span class="s-nr">' + esc(s.status) + '</span>' : '';
+  var dop = opcje.dopisek ? '<div class="s-czekam">' + opcje.dopisek + '</div>' : '';
   /* Z-11: sprawa „Wykonane" nie ma już terminu do pilnowania — w jego miejsce
      pokazujemy, ile dni czeka na fakturę (i od kiedy). */
   if (!ter && s.status === 'Wykonane' && !s.nr_faktury){
@@ -2558,7 +2636,8 @@ function kafelSprawy_(s, opcje){
     '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(klucz) + '</span>' + pill + '</div>' +
     (podpis ? '<div class="s-podpis' + (vin ? ' vin' : '') + '">' + esc(podpis) + '</div>' : '') +
     '<div class="s-opis">' + esc(s.tytul || '') + '</div>' +
-    '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + stat + ter + '</div></div></div>';
+    etapHTML_(s) +
+    '<div class="g3"><span class="s-nr">' + esc(s.id) + '</span>' + stat + ter + '</div>' + dop + '</div></div>';
 }
 /* Z-11: trzy filtry zamiast dwóch. „W toku" mieszało robotę z czekaniem
    na fakturę — teraz stan widać z samego filtra. */
@@ -2636,6 +2715,8 @@ function rysujKartaSprawy(){
   var m = maszynaSprawy(s);
   var h = '<span class="sp-back" onclick="pokaz(\'sprawy\')">'+I.back+' sprawy</span>'+
     '<div class="karta"><div class="sp-title"><div class="t">'+esc(s.tytul||s.maszyna)+'</div>'+pillStatus(s.status)+'</div>'+
+    /* A-42: etap pod tytułem — ten sam pasek kropek co na kafelku, plus „od kiedy" w tym statusie */
+    etapHTML_(s, null).replace('</small>', (s.status_od ? ' · od '+esc(dataKrotka_(s.status_od)) : '')+'</small>')+
     '<div class="meta2">'+
     '<div class="m"><div class="k">Sprawa</div><div class="v">'+esc(s.id)+' · '+esc(s.typ||'—')+'</div></div>'+
     '<div class="m" '+(m?'style="cursor:pointer" onclick="otworzMaszyne(\''+m.id+'\')"':'')+'>'+
@@ -2673,8 +2754,7 @@ function rysujKartaSprawy(){
         '</div>';
     }).join('')+'</div>';
 
-  if (s.notatki) h += '<div class="karta"><div class="h" style="margin:2px 0 6px">Notatka</div>'+
-    '<div class="notatka">'+notatkaHTML_(s.notatki)+'</div></div>';
+  if (s.notatki) h += '<div class="h">Gdzie jesteśmy</div><div class="karta bez-pad">'+notatkaKartaHTML_(s.notatki)+'</div>';
   /* A-27: slowa Marka w kolejnosci, w jakiej padly. Wpis „utworzenie" pomijamy —
      jego `tresc` to dokladnie `opis`, ktory stoi jako pierwszy. */
   var slowa = [];
@@ -2731,11 +2811,10 @@ function rysujKartaSprawy(){
   });
   h += '</div></div>';
 
-  h += '<div class="h">Dopisz do sprawy</div><div class="karta f">'+
-    '<div class="komunikat" id="dopiszKomunikat"></div>'+
-    '<textarea id="dopiszTresc" rows="3" placeholder="np. odebrane, faktura 1 890 zł netto — status sam się zmieni"></textarea>'+
-    '<div class="przycisk-glow" style="margin-top:9px"><button class="przycisk" onclick="wyslijDopisek()">Dopisz</button></div>'+
-    '<div class="fnote">sprawy się nie edytuje w polach — dopisujesz treść, a status wynika z treści;<br>każdy dopisek zostaje w Historii</div></div>';
+  /* A-42: „Dopisz do sprawy" ZDJĘTE z karty. Marek 23.09: „z dopisz do sprawy raczej nie
+     korzystam bo szybciej mi zrobić nowy wpis i opisać wszystko". Nowy wpis idzie przez „+",
+     a dopasowanie do sprawy robi Claude przy przepisywaniu. `wyslijDopisek()` zostaje w kodzie
+     (API i Skrzynka dalej rozumieją rodzaj „dopisek"), tylko bez formularza. */
   el('ekranSprawa').innerHTML = h;
 }
 
@@ -2749,6 +2828,60 @@ function notatkaHTML_(t){
     return l.replace(/^(\s*(?:⚠\s*)?[A-ZĄĆĘŁŃÓŚŹŻ][A-ZĄĆĘŁŃÓŚŹŻ0-9 ,\/\-]{1,32}:)/,
                      function(m){ return '<b>'+m+'</b>'; });
   }).join('\n');
+}
+/* A-42 (23.09.2026): NOTATKA W DWÓCH KARTACH. Rozbieramy tekst na linijki z etykietą
+   (STAN:, ZOSTAŁO:, UWAGA:, GDZIE:, …). STAN i ZOSTAŁO stają na wierzchu jako osobne karty,
+   wszystko inne — w tym stare dopiski po „ | " — idzie pod „więcej". Etykieta może mieć
+   ogon („STAN 22.09.2026:", „ZOSTAŁO (Marek):") — liczy się pierwsze słowo. Gdy notatka
+   nie ma ani STAN, ani ZOSTAŁO (stary styl), pokazujemy ją całą jak dotąd, żeby nic nie zginęło.
+   Zasada danych od 23.09 (plan Asystenta): Claude PRZEPISUJE notatkę zamiast dopisywać. */
+var ETYKIETA_RE = /^\s*(?:⚠\s*)?([A-ZĄĆĘŁŃÓŚŹŻ][A-ZĄĆĘŁŃÓŚŹŻ]+)(?:[^:\n]{0,30})?:\s*/;
+function rozbierzNotatke_(t){
+  var kawalki = String(t || '').split(/\n| \| /), stan = [], zostalo = [], reszta = [], biezacy = null;
+  kawalki.forEach(function(l){
+    if (!l.trim()) return;
+    var m = l.match(ETYKIETA_RE), cel;
+    if (m){
+      var e = m[1];
+      cel = e === 'STAN' ? stan : (e === 'ZOSTAŁO' || e === 'ZOSTALO') ? zostalo : reszta;
+      var tresc = l.slice(m[0].length);
+      cel.push(cel === reszta ? l.trim() : tresc.trim());
+      biezacy = cel;
+    } else if (biezacy && biezacy !== reszta){
+      biezacy[biezacy.length - 1] += '\n' + l.trim();     /* ciąg dalszy poprzedniej etykiety */
+    } else {
+      reszta.push(l.trim()); biezacy = reszta;
+    }
+  });
+  return { stan: stan, zostalo: zostalo, reszta: reszta };
+}
+function notatkaKartaHTML_(t){
+  var r = rozbierzNotatke_(t);
+  if (!r.stan.length && !r.zostalo.length)
+    return '<div class="notatka" style="padding:10px 12px">'+notatkaHTML_(t)+'</div>';
+  var h = '';
+  if (r.stan.length) h += '<div class="nk"><span class="nk-e">Stan</span><p>'+esc(r.stan.join('\n'))+'</p></div>';
+  if (r.zostalo.length) h += '<div class="nk zostalo"><span class="nk-e">Zostało</span><p>'+esc(r.zostalo.join('\n'))+'</p></div>';
+  if (r.reszta.length){
+    /* podpis guzika: krótkie etykiety z reszty („gdzie, wykonawca, uwaga");
+       długie nagłówki zdaniowe („DWA ZAKRESY, JEDEN PRZYJAZD:") pomijamy */
+    var ety = r.reszta.map(function(l){ var m = l.match(ETYKIETA_RE); if (!m) return null;
+                                        var e = m[0].replace(/^\s*⚠\s*/, '').replace(/:\s*$/, '').trim().toLowerCase();
+                                        return e.length <= 12 ? e : null; })
+                      .filter(function(x, i, a){ return x && a.indexOf(x) === i; }).slice(0, 3);
+    h += '<div class="nk-reszta ukryte" id="nkReszta"><div class="notatka">'+notatkaHTML_(r.reszta.join('\n'))+'</div></div>'+
+         '<button class="sk-btn nk-btn" id="nkGuzik" onclick="przelaczNotatke()">więcej'+
+         (ety.length ? ': '+esc(ety.join(', ')) : '')+'</button>';
+  }
+  return h;
+}
+function przelaczNotatke(){
+  var r = el('nkReszta'), g = el('nkGuzik');
+  if (!r) return;
+  var schowane = r.classList.toggle('ukryte');
+  if (!schowane) g.textContent = 'mniej';
+  else g.textContent = g.getAttribute('data-wiecej') || 'więcej';
+  if (!g.getAttribute('data-wiecej')) g.setAttribute('data-wiecej', schowane ? g.textContent : 'więcej');
 }
 
 
@@ -3299,8 +3432,7 @@ function pokazWersje(){
 function rysujWszystko(){
   stanSieci = { tryb:'ok', info:null };
   el('kto').textContent = liniaFirmy_(dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '');   // W-49
-  el('navKoszty').classList.toggle('ukryte', !dane.koszty);
-  document.querySelector('nav').style.setProperty('--zakladki', dane.koszty ? 5 : 4);
+  document.querySelector('nav').style.setProperty('--zakladki', 5);   /* A-42: Kontrahenci dla każdej roli */
   rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujKoszty(); rysujZglos(); rysujUstawieniaApki();
   if (aktualny==='karta') rysujKartaMaszyny();
   if (aktualny==='sprawa') rysujKartaSprawy();
