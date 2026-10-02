@@ -1107,6 +1107,7 @@ main{flex:1; padding:2px 14px 14px; overflow-x:hidden}
    padding:10px 12px; margin:10px 0; font-size:12px; color:var(--uwaga)}
 .kolejka-karta b{display:block; font-size:12.5px; margin-bottom:2px}
 .kolejka-karta .k-akcje{margin-top:7px; display:flex; gap:7px}
+.k-blad{font-size:13px; color:var(--blad, #b91c1c); margin:4px 0 2px;}   /* W-87c/A1 */
 .k-btn{border:1.5px solid var(--ok); background:var(--bg-ok); color:var(--ok); font:inherit;
    font-size:11px; font-weight:700; padding:5px 12px; border-radius:9px; cursor:pointer}
 .k-btn.usun{border-color:var(--blad); background:var(--bg-blad); color:var(--blad)}
@@ -1422,7 +1423,7 @@ var I = {
   ksiezyc: svg_('<path d="M19.5 14.5A7.8 7.8 0 0 1 9.5 4.5a8 8 0 1 0 10 10Z"/>'),
   telefon: svg_('<rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 5.2h3M10.8 18.6h2.4"/>'),
   klodka:  svg_('<rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/>'),
-  osoba:   svg_('<circle cx="12" cy="8.2" r="3.4"/><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0"/>'),
+  /* W-87b: drugi klucz `osoba` (nadpisywał ten z ic-user wyżej) — usunięty. */
   check:   svg_('<circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.5 2.6 4.9-5.4"/>'),
   odswiez: svg_('<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>'),
   gear: svg_('<circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/>')
@@ -1538,7 +1539,7 @@ var K = { kod:'asystent_kod', dane:'asystent_dane', kolejka:'asystent_kolejka',
           migracjaPalet:'asystent_migracja_palet' }; /* v9: jednorazowa migracja W-40 */
 /* ⚠ MUSI się zgadzać z WERSJA_CACHE w service-worker.js — używane tylko
    zanim worker odpowie (pierwsze sekundy po instalacji). Podbijać razem. */
-var WERSJA_SHELL = 'asystent-v36';
+var WERSJA_SHELL = 'asystent-v37';
 var dane = null;            /* ostatnia odpowiedz akcji "dane" */
 var aktualny = 'puls', poprzedni = 'puls';
 var biezacaMaszyna = null, biezacaSprawa = null;
@@ -1565,6 +1566,12 @@ function liniaFirmy_(osoba){
 
 function el(id){ return document.getElementById(id); }
 function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* W-87c (02.10.2026): argument do `onclick="fn(...)"` w stringu HTML. `esc` nie escapuje
+   apostrofu, a id trafialy do jednocudzyslowowych literalow JS — apostrof w id maszyny
+   albo w S-ID (kolumna A Skrzynki jest edytowalna recznie) wykonalby dowolny JS.
+   JSON.stringify daje literal w CUDZYSLOWACH z poprawnym escapowaniem, a `esc` zamienia
+   cudzyslowy na &quot; — HTML dekoduje je przed parsowaniem JS, wiec literal jest poprawny. */
+function jsArg(t){ return esc(JSON.stringify(String(t==null?'':t))); }
 function ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
@@ -1730,7 +1737,7 @@ function kafelTerminu_(p){
            : p.dni === 0 ? '<span class="pill red">wygasa DZIŚ</span>'
            : '<span class="pill amber">za ' + ile + ' dn.</span>';
   var podpis = podpisMaszyny(m), vin = czyKoparka_(m) && podpis === m.vin;
-  return '<div class="row" onclick="otworzMaszyne(\'' + m.id + '\')">' +
+  return '<div class="row" onclick="otworzMaszyne('+jsArg(m.id)+')">' +
     '<div class="ic k-' + kodRodzaju(m.rodzaj) + '">' + ikonaRodzaju(kodRodzaju(m.rodzaj)) + '</div>' +
     '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(kluczMaszyny(m)) + '</span>' + pill + '</div>' +
     (podpis ? '<div class="s-podpis' + (vin ? ' vin' : '') + '">' + esc(podpis) + '</div>' : '') +
@@ -2007,7 +2014,7 @@ function wierszSkrzynki_(w, prawa, klasa){
     ? '<span class="wp-wiecej">'+(otw ? 'zwiń' : 'więcej')+'</span>' : '';
   /* Klik lapiemy na SRODKU wiersza, nie na calym: po prawej stoi krzyzyk
      „Odrzuc" albo „Wroc do kolejki" i te maja swoje wlasne zadanie. */
-  var klik = dlugi ? ' style="cursor:pointer" onclick="przelaczWpis(\''+esc(w.s_id)+'\')"' : '';
+  var klik = dlugi ? ' style="cursor:pointer" onclick="przelaczWpis('+jsArg(w.s_id)+')"' : '';
   return '<div class="row'+(klasa||'')+'" style="cursor:default"><div class="ic">'+I.sprawy+'</div>'+
     '<div class="mid"'+klik+'><div class="t1">'+
     esc(w.rodzaj==='dopisek' ? 'Dopisek do '+(w.dotyczy||'sprawy') : (w.maszyna||'Zgłoszenie'))+
@@ -2026,13 +2033,13 @@ function skrzynkaHTML(skrz){
     h += '<div class="karta">';
     skrz.forEach(function(w){
       var prawa = porzadkujSkrzynke
-        ? '<button class="sk-ikonbtn" title="Odrzuć wpis" onclick="pytajOPowod(\''+esc(w.s_id)+'\')">'+I.krzyzyk+'</button>'
+        ? '<button class="sk-ikonbtn" title="Odrzuć wpis" onclick="pytajOPowod('+jsArg(w.s_id)+')">'+I.krzyzyk+'</button>'
         : '<span class="pill amber">czeka</span>';
       h += wierszSkrzynki_(w, prawa);
       if (porzadkujSkrzynke && odrzucanySId === w.s_id){
         h += '<div class="sk-panel"><div class="sk-panel-t">Odrzucić ten wpis? Dlaczego:</div><div class="sk-chipy">';
         POWODY.forEach(function(pw){
-          h += '<button class="sk-chip" onclick="odrzucWpis(\''+esc(w.s_id)+'\',\''+pw+'\')">'+pw+'</button>';
+          h += '<button class="sk-chip" onclick="odrzucWpis('+jsArg(w.s_id)+','+jsArg(pw)+')">'+pw+'</button>';
         });
         h += '</div><button class="sk-btn" onclick="anulujOdrzucenie()">Anuluj</button></div>';
       }
@@ -2045,7 +2052,7 @@ function skrzynkaHTML(skrz){
          '<span>'+(odrzuconeOtwarte?'ukryj':'pokaż')+'</span></button>';
     if (odrzuconeOtwarte){
       odrz.forEach(function(w){
-        var wroc = '<button class="sk-btn" onclick="cofnijOdrzucenie(\''+esc(w.s_id)+'\')">'+
+        var wroc = '<button class="sk-btn" onclick="cofnijOdrzucenie('+jsArg(w.s_id)+')">'+
                    I.odswiez+'Wróć do kolejki</button>';
         var kopia = { s_id:w.s_id, rodzaj:w.rodzaj, dotyczy:w.dotyczy, maszyna:w.maszyna,
                       kto:'odrzucone '+(w.odrzucono||'—'), utworzono:(w.powod||''), tresc:w.tresc };
@@ -2287,7 +2294,7 @@ function rysujPuls(){
     spokojneHTML = '<div class="h">Spokojne — nic tu dziś nie wymaga ruchu</div><div class="karta">';
     spokojne.forEach(function(x){
       var otw = !!otwarteSpokojne[x.klucz];
-      spokojneHTML += '<div class="linia" onclick="przelaczSpokojne(\'' + x.klucz + '\')">'+
+      spokojneHTML += '<div class="linia" onclick="przelaczSpokojne('+jsArg(x.klucz)+')">'+
         '<span class="lw"><b>'+x.ile+'</b> '+x.opis+'</span>'+
         '<span class="pr" style="color:var(--akcent);font-weight:700">'+(otw?'ukryj':'pokaż')+'</span></div>'+
         (otw ? x.rysuj() : '');
@@ -2348,7 +2355,7 @@ function linijkaSprawy_(s, prawa, dopisek){
   var m = maszynaSprawy(s);
   var klucz = m ? kluczMaszyny(m) : (s.maszyna || 'maszyna nieznana');
   var kod = m ? kodRodzaju(m.rodzaj) : 'inne';
-  return '<div class="linia" onclick="otworzSprawe(\''+s.id+'\')">'+
+  return '<div class="linia" onclick="otworzSprawe('+jsArg(s.id)+')">'+
     '<span class="lw"><span class="kropka k-'+kod+'"></span><b>'+esc(klucz)+'</b> · '+
     esc(s.tytul||'')+(dopisek||'')+'</span>'+
     '<span class="pr">'+(prawa||'')+'</span></div>';
@@ -2371,7 +2378,7 @@ function rysujSzukaj(){
   var obecne = {}; (dane.maszyny||[]).forEach(function(m){ obecne[kodRodzaju(m.rodzaj)] = true; });
   katy = katy.filter(function(k){ return k[0]==='wszystkie' || obecne[k[0]]; });
   h += '<div class="chips">'+katy.map(function(k){
-    return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat(\''+k[0]+'\')">'+k[1]+'</button>';
+    return '<button class="chip'+(filtrKat===k[0]?' on':'')+'" onclick="ustawKat('+jsArg(k[0])+')">'+k[1]+'</button>';
   }).join('')+'</div>';
   var lista = sortujMaszyny((dane.maszyny||[]).filter(function(m){
     if (filtrKat!=='wszystkie' && kodRodzaju(m.rodzaj)!==filtrKat) return false;
@@ -2394,7 +2401,7 @@ function rysujSzukaj(){
       h += '<div class="grupa">'+esc(nazwaKategorii_(m))+'</div>';
     }
     var model = podpisMaszyny(m), vin = (model && model === m.vin);
-    h += '<div class="mrow" onclick="otworzMaszyne(\''+m.id+'\')">'+
+    h += '<div class="mrow" onclick="otworzMaszyne('+jsArg(m.id)+')">'+
       '<span class="ik ic k-'+kodRodzaju(m.rodzaj)+'">'+ikonaRodzaju(kodRodzaju(m.rodzaj))+'</span>'+
       '<span class="nm"><b>'+esc(kluczMaszyny(m))+'</b>'+
         (model ? '<span class="model'+(vin?' vin':'')+'">'+esc(model)+'</span>' : '')+'</span>'+
@@ -2507,7 +2514,7 @@ function rysujKontrahentow(){
       (spr.length ? '<div class="kt-spr"><b>'+spr.length+' '+(spr.length===1?'sprawa':spr.length<5?'sprawy':'spraw')+':</b> '+
         spr.map(function(s){
           var m = maszynaSprawy(s), klucz = m ? kluczMaszyny(m) : (s.maszyna||'?');
-          return '<span onclick="otworzSprawe(\''+s.id+'\')" style="cursor:pointer">'+esc(klucz)+' — '+
+          return '<span onclick="otworzSprawe('+jsArg(s.id)+')" style="cursor:pointer">'+esc(klucz)+' — '+
                  esc(String(s.tytul||'').split(' — ')[0].slice(0, 42))+'</span>';
         }).join(' · ')+'</div>' : '')+
       '</div></div>';
@@ -2527,15 +2534,16 @@ function rysujKartaMaszyny(){
     (m.kierowca ? '<span>· '+esc(m.kierowca)+'</span>' : '')+'</div>'+
     /* VIN na karcie — tylko koparki, tak jak na liście */
     (czyKoparka_(m) && m.vin ? '<div class="vin">VIN '+esc(m.vin)+'</div>' : '')+'</div>';
-  h += '<div class="terms">'+terminHTML('Badanie', m.terminy.badanie)+
-       terminHTML('OC', m.terminy.oc)+terminHTML('UDT', m.terminy.udt)+
-       terminHTML('Mienie', m.terminy.mienie)+'</div>';
+  var ter = m.terminy || {};   // W-87c/A2: reszta kodu zaklada, ze pola moze nie byc — karta tez
+  h += '<div class="terms">'+terminHTML('Badanie', ter.badanie)+
+       terminHTML('OC', ter.oc)+terminHTML('UDT', ter.udt)+
+       terminHTML('Mienie', ter.mienie)+'</div>';
 
   var spr = (dane.sprawy||[]).filter(function(s){ return s.id_pojazdu === m.id; });
   h += '<div class="h">Sprawy tej maszyny</div><div class="karta">';
   if (!spr.length) h += '<div class="pusto">Brak spraw — i dobrze.</div>';
   spr.forEach(function(s){
-    h += '<div class="row" onclick="otworzSprawe(\''+s.id+'\')">'+
+    h += '<div class="row" onclick="otworzSprawe('+jsArg(s.id)+')">'+
       '<div class="ic k-'+kodRodzaju(m.rodzaj)+'">'+I.wr+'</div>'+
       '<div class="mid"><div class="t1">'+esc(s.tytul||'')+'</div>'+
       '<div class="t2">'+esc(s.id)+' · '+esc(czasPL(s.utworzono))+'</div></div>'+pillStatus(s.status)+'</div>';
@@ -2630,7 +2638,7 @@ function kafelSprawy_(s, opcje){
     if (dF !== null) ter = '<span class="s-ter' + (dF > PROGI.faktura ? ' red' : '') +
       '">czeka na fakturę: ' + dF + ' dn.</span>';
   }
-  return '<div class="row" onclick="otworzSprawe(\'' + s.id + '\')">' +
+  return '<div class="row" onclick="otworzSprawe('+jsArg(s.id)+')">' +
     '<div class="ic k-' + (m ? kodRodzaju(m.rodzaj) : 'inne') + '">' +
     ikonaRodzaju(m ? kodRodzaju(m.rodzaj) : 'inne') + '</div>' +
     '<div class="mid"><div class="g1"><span class="s-klucz">' + esc(klucz) + '</span>' + pill + '</div>' +
@@ -2719,7 +2727,7 @@ function rysujKartaSprawy(){
     etapHTML_(s, null).replace('</small>', (s.status_od ? ' · od '+esc(dataKrotka_(s.status_od)) : '')+'</small>')+
     '<div class="meta2">'+
     '<div class="m"><div class="k">Sprawa</div><div class="v">'+esc(s.id)+' · '+esc(s.typ||'—')+'</div></div>'+
-    '<div class="m" '+(m?'style="cursor:pointer" onclick="otworzMaszyne(\''+m.id+'\')"':'')+'>'+
+    '<div class="m" '+(m?'style="cursor:pointer" onclick="otworzMaszyne('+jsArg(m.id)+')"':'')+'>'+
       '<div class="k">Maszyna</div><div class="v">'+esc(m ? m.nazwa+(m.rejestracja?' · '+m.rejestracja:'') : s.maszyna||'—')+'</div></div>'+
     '<div class="m"><div class="k">Zgłosił</div><div class="v">'+esc(s.zglosil||'—')+' · '+esc(dataPL(s.utworzono))+'</div></div>'+
     '<div class="m"><div class="k">Termin</div><div class="v">'+esc(s.termin ? dataPL(s.termin) : '—')+'</div></div>'+
@@ -2878,10 +2886,11 @@ function notatkaKartaHTML_(t){
 function przelaczNotatke(){
   var r = el('nkReszta'), g = el('nkGuzik');
   if (!r) return;
+  /* W-87b: pełną etykietę („więcej: gdzie, uwaga”) zapamiętujemy PRZED pierwszym
+     nadpisaniem — do 02.10 po zwinięciu guzik mówił gołe „więcej”. */
+  if (!g.getAttribute('data-wiecej')) g.setAttribute('data-wiecej', g.textContent);
   var schowane = r.classList.toggle('ukryte');
-  if (!schowane) g.textContent = 'mniej';
-  else g.textContent = g.getAttribute('data-wiecej') || 'więcej';
-  if (!g.getAttribute('data-wiecej')) g.setAttribute('data-wiecej', schowane ? g.textContent : 'więcej');
+  g.textContent = schowane ? g.getAttribute('data-wiecej') : 'mniej';
 }
 
 
@@ -2902,7 +2911,7 @@ function rysujKoszty(){
   var KOS = dane.koszty;
   if (kosztyIdx >= KOS.length) kosztyIdx = 0;
   var h = '<div class="seg">'+[['kat','Kategorie'],['masz','Maszyny'],['mies','Miesiące']].map(function(p){
-    return '<button class="'+(kosztyKv===p[0]?'on':'')+'" onclick="ustawKoszty(\''+p[0]+'\')">'+p[1]+'</button>';
+    return '<button class="'+(kosztyKv===p[0]?'on':'')+'" onclick="ustawKoszty('+jsArg(p[0])+')">'+p[1]+'</button>';
   }).join('')+'</div>';
 
   if (kosztyKv === 'mies'){
@@ -3107,6 +3116,7 @@ function kolejkaHTML(){
   k.forEach(function(w, i){
     h += '<div class="kolejka-karta"><b>Niewysłane: '+esc(w.rodzaj==='dopisek'?'dopisek do '+(w.dotyczy||'sprawy'):'zgłoszenie')+'</b>'+
       esc((w.tresc||'').slice(0,90))+'…'+
+      (w.blad ? '<div class="k-blad">Serwer odrzucił: '+esc(w.blad)+'</div>' : '')+   /* W-87c/A1 */
       '<div class="k-akcje"><button class="k-btn" onclick="wyslijKolejke()">Spróbuj ponownie</button>'+
       '<button class="k-btn usun" onclick="usunZKolejki('+i+')">Usuń</button></div></div>';
   });
@@ -3132,6 +3142,16 @@ function wyslijKolejke(){
     if (d.ok){ var k2 = kolejka(); k2.shift(); zapiszKolejke(k2);
       pobierzDane(true); rysujPuls();
       if (k2.length) wyslijKolejke(); }
+    else {
+      /* W-87c/A1: odmowa MERYTORYCZNA (za dluga tresc, zly numer sprawy, cudza
+         sprawa) — do 02.10 wpis zostawal w kolejce i byl ponawiany przy kazdym
+         `online`/`visibilitychange`, bez slowa dlaczego. Teraz powod zapisuje sie
+         przy wpisie (karta w kolejce go pokazuje) i lancuch sie przerywa; „Usun"
+         zdejmuje wpis, „Sprobuj ponownie" probuje raz jeszcze. */
+      var k3 = kolejka();
+      if (k3[0] && k3[0].klucz === w.klucz){ k3[0].blad = d.blad || 'serwer odrzucil wpis'; zapiszKolejke(k3); }
+      rysujPuls();
+    }
   }).catch(function(){ trwaKolejka = false; });
 }
 
@@ -3174,7 +3194,11 @@ function wyslijZgloszenie(){
       rysujZglos();
     });
 }
+/* W-87c/A3: formularz dopisku zdjety z karty w A-42 — elementow #dopiszTresc /
+   #dopiszKomunikat NIE MA w HTML. Funkcja zostaje (nowy wpis przez „+" tez idzie
+   rodzajem `dopisek`), ale z oslona, zeby ewentualny guzik nie wywrocil appki. */
 function wyslijDopisek(){
+  if (!el('dopiszTresc') || !el('dopiszKomunikat')) return;
   var tresc = el('dopiszTresc').value.trim();
   if (!tresc){ var k=el('dopiszKomunikat'); k.className='komunikat blad'; k.textContent='Napisz treść dopisku.'; return; }
   wyslijWpis({ rodzaj:'dopisek', dotyczy: biezacaSprawa, maszyna:'', typ:'',
@@ -3433,7 +3457,10 @@ function rysujWszystko(){
   stanSieci = { tryb:'ok', info:null };
   el('kto').textContent = liniaFirmy_(dane.osoba ? dane.osoba.imie+' · '+dane.osoba.rola : '');   // W-49
   document.querySelector('nav').style.setProperty('--zakladki', 5);   /* A-42: Kontrahenci dla każdej roli */
-  rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujKoszty(); rysujZglos(); rysujUstawieniaApki();
+  rysujPuls(); rysujSzukaj(); rysujSprawy(); rysujZglos(); rysujUstawieniaApki();
+  /* W-87b: `rysujKoszty()` zdjęte z każdego odświeżenia — ekran „Koszty” nie ma
+     wejścia od A-42 (zakładkę zajęli Kontrahenci); funkcja zostaje, woła ją tylko
+     ten, kto ten ekran kiedyś przywróci. */
   if (aktualny==='karta') rysujKartaMaszyny();
   if (aktualny==='sprawa') rysujKartaSprawy();
   if (komTrwaly){ var kk = el(komTrwaly.id);
